@@ -61,7 +61,7 @@ h1 {
     flex-wrap: wrap;
 }
 
-input[type="text"] {
+select, input[type="text"] {
     padding: 10px;
     border: 1px solid var(--color-border);
     border-radius: 4px;
@@ -70,6 +70,12 @@ input[type="text"] {
     font-size: 16px;
     flex: 1;
     min-width: 200px;
+    background-color: var(--color-white);
+}
+
+select:disabled {
+    background-color: var(--color-background-light);
+    cursor: not-allowed;
 }
 
 button {
@@ -145,23 +151,21 @@ button:hover {
 }
 
 /* Event Status Styles */
-.schedule-container tr:not(.past-event):not(.collapsed-past-events):not(:first-child) {
+.schedule-container tbody > tr {
     color: var(--color-future-text);
     background-color: var(--color-future-background);
 }
 
-.past-event {
+.schedule-container tbody > tr:nth-child(even) {
+    background-color: var(--color-future-background-alt);
+}
+
+.schedule-container tbody > tr.past-event {
     color: var(--color-past-text);
     background-color: var(--color-past-background);
 }
 
-/* Alternating Colors */
-.schedule-container tr:not(.past-event):nth-child(even),
-.past-event:nth-child(even) {
-    background-color: var(--color-future-background-alt);
-}
-
-.past-event:nth-child(even) {
+.schedule-container tbody > tr.past-event:nth-child(even) {
     background-color: var(--color-past-background-alt);
 }
 
@@ -202,6 +206,63 @@ button:hover {
 
 .show-past-events-btn:hover {
     background-color: var(--color-past-hover);
+}
+
+/* Tournament Type Selection Styles */
+.tournament-type {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.radio-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.radio-group label {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--color-white);
+    border: 2px solid var(--color-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.radio-group label:hover {
+    background-color: var(--color-background-light);
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 8px;
+}
+
+.radio-group input[type="radio"]:checked + span {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.radio-group label:has(input[type="radio"]:checked) {
+    background-color: var(--color-background-light);
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+@media (max-width: 768px) {
+    .toggle {
+        width: 180px;
+    }
+    
+    .slider:before {
+        width: 86px;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(86px);
+    }
 }
 
 /* Responsive Styles */

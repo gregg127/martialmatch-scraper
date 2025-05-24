@@ -12,8 +12,22 @@
         
         <form id="tournamentForm">
             <div class="form-group">
-                <label for="tournamentUrl">Zawody:</label>
-                <input type="text" id="tournamentUrl" name="url" placeholder="Enter MartialMatch tournament URL" required>
+                <div class="tournament-type">
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="tournamentType" value="current" checked>
+                            <span>Nadchodzące zawody</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="tournamentType" value="archived">
+                            <span>Zawody archiwalne</span>
+                        </label>
+                    </div>
+                </div>
+                <label for="tournamentUrl">Wybierz zawody:</label>
+                <select id="tournamentUrl" name="url" required>
+                    <option value="">Pobieram turnieje...</option>
+                </select>
                 <button type="submit">Pokaż Harmonogram</button>
             </div>
         </form>
