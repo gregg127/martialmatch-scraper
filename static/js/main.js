@@ -87,10 +87,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         <table>
                             <thead>
                                 <tr>
-                                    <th data-column="name">Name</th>
-                                    <th data-column="category" class="category-header">Category</th>
-                                    <th data-column="mat">Mat</th>
-                                    <th data-column="time">Time</th>
+                                    <th data-column="name">Imię i nazwisko</th>
+                                    <th data-column="category" class="category-header">Kategoria</th>
+                                    <th data-column="mat">Mata</th>
+                                    <th data-column="time">Czas</th>
                                 </tr>
                             </thead>
                             <tbody>
