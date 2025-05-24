@@ -5,7 +5,13 @@ body {
     background-color: #f0f2f5;
 }
 
-h1 {
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2 {
     color: #1a73e8;
     text-align: center;
     margin-bottom: 20px;
@@ -16,4 +22,116 @@ p {
     line-height: 1.6;
     text-align: center;
     font-size: 18px;
+}
+
+.form-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+    align-items: center;
+}
+
+input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 400px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #1557b0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+.error {
+    color: #dc3545;
+    text-align: center;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #f8d7da;
+    border-radius: 4px;
+}
+
+#loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+    color: #666;
+}
+
+.schedule-container {
+    padding: 20px;
+}
+
+.schedule-container h3 {
+    color: #1a73e8;
+    padding: 10px;
+    margin: 20px 0 10px 0;
+    border-bottom: 2px solid #1a73e8;
+}
+
+.schedule-container table {
+    margin-bottom: 40px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.schedule-container th {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    font-weight: 600;
+}
+
+.schedule-container tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.schedule-container td:first-child {
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .schedule-container {
+        overflow-x: auto;
+    }
+    
+    table {
+        min-width: 800px;
+    }
 }
