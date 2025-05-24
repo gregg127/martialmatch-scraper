@@ -9,26 +9,33 @@
 <body>
     <div class="container">
         <h1>Szukaczka Warszawskich Goryli</h1>
-        
+        <p class="app-description">
+            Aplikacja dla wybranych zawodów wyszukuje wszystkich zawodników zarejestrowanych pod klubem <b>Academia Gorila (Warszawa)</b> (literówki nie są przewidziane!).
+        </p>
+
         <form id="tournamentForm">
-            <div class="form-group">
-                <div class="tournament-type">
+            <div class="form-container">
+                <div class="form-section tournament-type">
                     <div class="radio-group">
-                        <label>
+                        <label class="radio-label">
                             <input type="radio" name="tournamentType" value="current" checked>
                             <span>Nadchodzące zawody</span>
                         </label>
-                        <label>
+                        <label class="radio-label">
                             <input type="radio" name="tournamentType" value="archived">
                             <span>Zawody archiwalne</span>
                         </label>
                     </div>
                 </div>
-                <label for="tournamentSelect">Wybierz zawody:</label>
-                <select id="tournamentSelect" name="tournamentId" required>
-                    <option value="">Pobieram turnieje...</option>
-                </select>
-                <button type="submit">Pokaż Harmonogram</button>
+                <div class="form-section select-section">
+                    <label for="tournamentSelect" class="select-label">Wybierz zawody:</label>
+                    <select id="tournamentSelect" name="tournamentId" required>
+                        <option value="">Pobieram turnieje...</option>
+                    </select>
+                </div>
+                <div class="form-section button-section">
+                    <button type="submit">Pokaż Harmonogram</button>
+                </div>
             </div>
         </form>
 
