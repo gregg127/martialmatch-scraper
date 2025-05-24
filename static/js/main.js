@@ -1,15 +1,15 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('tournamentForm');
     const loading = document.getElementById('loading');
     const results = document.getElementById('results');
     const error = document.getElementById('error');
     const scheduleContainer = document.getElementById('scheduleContainer');
 
-    form.addEventListener('submit', async function(e) {
+    form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const url = document.getElementById('tournamentUrl').value;
-        
+
         // Show loading, hide other containers
         loading.style.display = 'block';
         results.style.display = 'none';
@@ -25,13 +25,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Display schedule grouped by day
             let scheduleHtml = '';
-            
+
             if (Object.keys(data.schedule).length === 0) {
                 scheduleHtml = '<div class="error">No schedule data available for this tournament.</div>';
             } else {
                 for (const [day, scheduleItems] of Object.entries(data.schedule)) {
                     if (!scheduleItems || scheduleItems.length === 0) continue;
-                    
+
                     scheduleHtml += `
                         <h3>${day}</h3>
                         <table>
@@ -39,29 +39,37 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <tr>
                                     <th>Name</th>
                                     <th>Category</th>
-                                    <th>Club</th>
                                     <th>Mat</th>
                                     <th>Time</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${scheduleItems.map(item => `
-                                    <tr>
+                                ${scheduleItems.map(item => {
+                        const timeStr = item["Szacowany czas"] || '';
+                        const startTime = timeStr.split(' - ')[0];
+                        const [hours, minutes] = startTime.split(':').map(Number);
+
+                        const now = new Date();
+                        const eventTime = new Date();
+                        eventTime.setHours(hours, minutes, 0);
+
+                        const isPast = now > eventTime;
+
+                        return `
+                                    <tr class="${isPast ? 'past-event' : ''}">
                                         <td>${escapeHtml(item["Imię i nazwisko"] || '-')}</td>
                                         <td>${escapeHtml(item.Kategoria || '-')}</td>
-                                        <td>${escapeHtml(item.Klub || '-')}</td>
                                         <td>${escapeHtml(item.Mata || '-')}</td>
-                                        <td>${escapeHtml(item["Szacowany czas"] || '-')}</td>
+                                        <td>${escapeHtml(timeStr || '-')}</td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                    }).join('')}
                             </tbody>
                         </table>
                     `;
                 }
             }
             scheduleContainer.innerHTML = scheduleHtml;
-
-            // Schedule is now the only section we display
 
             // Show results
             results.style.display = 'block';

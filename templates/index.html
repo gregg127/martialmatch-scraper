@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BJJ Tournament Schedule</title>
+    <title>Szukaczka Warszawskich Goryli</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>BJJ Tournament Schedule</h1>
+        <h1>Szukaczka Warszawskich Goryli</h1>
         
         <form id="tournamentForm">
             <div class="form-group">
-                <label for="tournamentUrl">Tournament URL:</label>
+                <label for="tournamentUrl">Zawody:</label>
                 <input type="text" id="tournamentUrl" name="url" placeholder="Enter MartialMatch tournament URL" required>
-                <button type="submit">Get Schedule</button>
+                <button type="submit">Pokaż Harmonogram</button>
             </div>
         </form>
 
-        <div id="loading" style="display: none;">Loading...</div>
+        <div id="loading" style="display: none;">Pobieram...</div>
         
         <div id="results" style="display: none;">
-            <h2>Tournament Schedule</h2>
             <div id="scheduleContainer" class="schedule-container"></div>
         </div>
 
