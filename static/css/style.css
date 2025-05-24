@@ -26,6 +26,7 @@
     --color-future-hover: #c8ffd0;
 }
 
+/* Base Styles */
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
@@ -35,30 +36,40 @@ body {
 
 .container {
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 15px;
+    box-sizing: border-box;
 }
 
+/* Typography */
 h1 {
     color: var(--color-primary);
     text-align: center;
     margin-bottom: 20px;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    word-wrap: break-word;
 }
 
+/* Form Styles */
 .form-group {
     display: flex;
     gap: 10px;
     margin-bottom: 30px;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 input[type="text"] {
     padding: 10px;
     border: 1px solid var(--color-border);
     border-radius: 4px;
-    width: 400px;
+    width: 100%;
+    max-width: 400px;
     font-size: 16px;
+    flex: 1;
+    min-width: 200px;
 }
 
 button {
@@ -76,6 +87,7 @@ button:hover {
     background-color: var(--color-primary-hover);
 }
 
+/* Status and Feedback */
 .error {
     color: var(--color-error);
     text-align: center;
@@ -92,6 +104,7 @@ button:hover {
     color: var(--color-text-light);
 }
 
+/* Schedule Container */
 .schedule-container {
     padding: 20px;
 }
@@ -99,10 +112,11 @@ button:hover {
 .schedule-container h3 {
     color: var(--color-primary-light);
     padding: 10px;
-    margin: 20px 0 10px 0;
+    margin: 20px 0 10px;
     border-bottom: 2px solid var(--color-primary);
 }
 
+/* Table Styles */
 .schedule-container table {
     width: 100%;
     border-collapse: collapse;
@@ -126,42 +140,45 @@ button:hover {
     font-weight: 600;
 }
 
-.schedule-container tr:hover {
-    background-color: var(--color-hover);
-}
-
 .schedule-container td:first-child {
     font-weight: 500;
 }
 
-/* Future event styles */
+/* Event Status Styles */
 .schedule-container tr:not(.past-event):not(.collapsed-past-events):not(:first-child) {
     color: var(--color-future-text);
     background-color: var(--color-future-background);
 }
 
-.schedule-container tr:not(.past-event):not(.collapsed-past-events):not(:first-child):nth-child(even) {
-    background-color: var(--color-future-background-alt);
-}
-
-.schedule-container tr:not(.past-event):not(.collapsed-past-events):not(:first-child):hover {
-    background-color: var(--color-future-hover);
-}
-
-/* Past event styles */
 .past-event {
     color: var(--color-past-text);
     background-color: var(--color-past-background);
+}
+
+/* Alternating Colors */
+.schedule-container tr:not(.past-event):nth-child(even),
+.past-event:nth-child(even) {
+    background-color: var(--color-future-background-alt);
 }
 
 .past-event:nth-child(even) {
     background-color: var(--color-past-background-alt);
 }
 
+/* Hover States */
+.schedule-container tr:hover {
+    background-color: var(--color-hover);
+}
+
 .past-event:hover {
     background-color: var(--color-past-hover);
 }
 
+.schedule-container tr:not(.past-event):hover {
+    background-color: var(--color-future-hover);
+}
+
+/* Past Events Toggle */
 .collapsed-past-events {
     display: none;
 }
@@ -185,15 +202,98 @@ button:hover {
 
 .show-past-events-btn:hover {
     background-color: var(--color-past-hover);
-    border-color: var(--color-past-text);
 }
 
+/* Responsive Styles */
 @media (max-width: 768px) {
-    .schedule-container {
-        overflow-x: auto;
+    /* Basic Layout */
+    body, .container {
+        padding: 10px;
     }
 
-    .schedule-container table {
-        min-width: 800px;
+    /* Form Adjustments */
+    .form-group {
+        gap: 8px;
+    }
+
+    .form-group label {
+        width: 100%;
+        text-align: left;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+    }
+
+    /* Schedule Container */
+    .schedule-container {
+        padding: 10px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -10px;
+    }
+
+    .schedule-container h3 {
+        font-size: 1.2rem;
+        padding: 8px;
+    }
+
+    /* Grid Layout */
+    .schedule-container table,
+    .schedule-container thead,
+    .schedule-container tbody,
+    .schedule-container tr {
+        display: grid;
+    }
+
+    .schedule-container tr {
+        grid-template-columns: 20% 20% 25% 35%;
+        font-size: 14px;
+    }
+
+    .schedule-container th,
+    .schedule-container td {
+        padding: 8px 10px;
+    }
+
+    /* Column Order */
+    [data-column="name"] { order: 1; }
+    [data-column="mat"] { order: 2; }
+    [data-column="time"] { order: 3; }
+    [data-column="category"] { order: 4; }
+
+    .show-past-events-btn {
+        width: 100%;
+        padding: 8px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Basic Layout */
+    body, .container {
+        padding: 5px;
+    }
+
+    h1 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    /* Form */
+    input[type="text"] {
+        font-size: 14px;
+    }
+
+    /* Table Adjustments */
+    .schedule-container tr {
+        grid-template-columns: 25% 15% 25% 35%;
+    }
+
+    .schedule-container th,
+    .schedule-container td {
+        padding: 6px 8px;
+        font-size: 13px;
     }
 }
