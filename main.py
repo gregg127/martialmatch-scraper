@@ -32,8 +32,8 @@ async def get_tournaments():
     return {"tournaments": tournaments}
 
 
-@app.get("/api/bjj-participants/{event_id}")
-async def get_bjj_participants(event_id: str) -> Dict[str, Any]:
+@app.get("/api/participants/{event_id}")
+async def get_participants(event_id: str) -> Dict[str, Any]:
     try:
         participants = fetch_bjj_participants(event_id)
         if participants.empty:

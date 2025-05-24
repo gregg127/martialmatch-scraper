@@ -12,18 +12,6 @@
     --color-error-background: #f8d7da;
     --color-hover: #e9ecef;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    
-    /* Past event colors (gentle red theme) */
-    --color-past-text: #8b4343;
-    --color-past-background: #ffe5e5;
-    --color-past-background-alt: #ffd6d6;
-    --color-past-hover: #ffcaca;
-
-    /* Future event colors (gentle green theme) */
-    --color-future-text: #2d5a3d;
-    --color-future-background: #e5ffe8;
-    --color-future-background-alt: #d6ffd9;
-    --color-future-hover: #c8ffd0;
 }
 
 /* Base Styles */
@@ -164,32 +152,6 @@ button:hover {
     background-color: var(--color-hover) !important;
 }
 
-/* Past Events Toggle */
-.collapsed-past-events {
-    display: none;
-}
-
-.collapsed-past-events.show {
-    display: table-row;
-}
-
-.show-past-events-btn {
-    display: inline-block;
-    margin: 10px 0;
-    padding: 5px 10px;
-    background-color: var(--color-past-background);
-    color: var(--color-past-text);
-    border: 1px solid var(--color-past-text);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s ease;
-}
-
-.show-past-events-btn:hover {
-    background-color: var(--color-past-hover);
-}
-
 /* Tournament Type Selection Styles */
 .tournament-type {
     margin-bottom: 20px;
@@ -306,11 +268,6 @@ button:hover {
     [data-column="time"] { order: 3; }
     [data-column="category"] { order: 4; }
 
-    .show-past-events-btn {
-        width: 100%;
-        padding: 8px;
-        text-align: center;
-    }
 }
 
 @media (max-width: 480px) {

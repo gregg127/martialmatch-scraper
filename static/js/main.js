@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
         results: document.getElementById('results'),
         error: document.getElementById('error'),
         scheduleContainer: document.getElementById('scheduleContainer'),
-        tournamentSelect: document.getElementById('tournamentUrl'),
+        tournamentSelect: document.getElementById('tournamentSelect'),
         tournamentTypeRadios: document.getElementsByName('tournamentType')
     };
 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize tournaments dropdown
     async function initializeTournaments() {
         elements.tournamentSelect.disabled = true;
-        elements.tournamentSelect.innerHTML = '<option value="">Loading tournaments...</option>';
+        elements.tournamentSelect.innerHTML = '<option value="">Ładuje...</option>';
 
         try {
             const response = await fetch('/api/tournaments');
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
         } catch (err) {
-            elements.tournamentSelect.innerHTML = '<option value="">Error loading tournaments</option>';
+            elements.tournamentSelect.innerHTML = '<option value="">Błąd podczas ładowania</option>';
             console.error('Error fetching tournaments:', err);
         } finally {
             elements.tournamentSelect.disabled = false;
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ? tournaments.map(tournament => 
                 `<option value="${tournament.id}">${tournament.name}</option>`
               ).join('')
-            : '<option value="">No tournaments available</option>';
+            : '<option value="">Brak turniejów</option>';
     }
 
     // Form submit handler
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const eventId = elements.tournamentSelect.value;
-            const response = await fetch(`/api/bjj-participants/${eventId}`);
+            const response = await fetch(`/api/participants/${eventId}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
             let scheduleHtml = '';
 
             if (Object.keys(data.schedule).length === 0) {
-                scheduleHtml = '<div class="error">No schedule data available for this tournament.</div>';
+                scheduleHtml = '<div class="error">Brak danych o harmonogramie dla tych zawodów.</div>';
             } else {
                 for (const [day, scheduleItems] of Object.entries(data.schedule)) {
                     if (!scheduleItems || scheduleItems.length === 0) continue;
@@ -96,15 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <tbody>
                                 ${scheduleItems.map(item => {
                                     const timeStr = item["Szacowany czas"] || '';
-                                    const startTime = timeStr.split(' - ')[0];
-                                    const [hours, minutes] = startTime.split(':').map(Number);
-
-                                    const now = new Date();
-                                    const eventTime = new Date();
-                                    eventTime.setHours(hours, minutes, 0);
-
                                     return `
-                                        <tr class="${now > eventTime ? 'past-event' : ''}">
+                                        <tr>
                                             <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || '-')}</td>
                                             <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || '-')}</td>
                                             <td data-column="mat">${escapeHtml(item.Mata || '-')}</td>
