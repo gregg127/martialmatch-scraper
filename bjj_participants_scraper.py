@@ -5,6 +5,7 @@ from datetime import datetime
 import re
 from cachetools import TTLCache
 from functools import wraps
+import pytz
 
 # Constants
 BASE_URL = "https://martialmatch.com"
@@ -12,6 +13,7 @@ PARTICIPANTS_CACHE_TTL = 1800   # Cache time in seconds (30 minutes)
 SCHEDULE_CACHE_TTL = 600        # Cache time in seconds (10 minutes)
 TOURNAMENTS_CACHE_TTL = 3600    # Cache time in seconds (60 minutes)
 CACHE_SIZE = 50                 # Maximum number of items in cache
+TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 # Initialize caches
 participants_cache = TTLCache(maxsize=CACHE_SIZE, ttl=PARTICIPANTS_CACHE_TTL)
@@ -110,8 +112,15 @@ def fetch_bjj_schedule(event_id):
             for category in mat.get("categories", []):
                 try:
                     times = category.get("scheduledCategoryTime", {})
-                    start = datetime.strptime(times["start"], DATE_FORMAT).strftime('%H:%M')
-                    end = datetime.strptime(times["end"], DATE_FORMAT).strftime('%H:%M')
+                    start_time = datetime.strptime(times["start"], DATE_FORMAT)
+                    end_time = datetime.strptime(times["end"], DATE_FORMAT)
+                    
+                    # Convert to Polish timezone
+                    start_time = start_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
+                    end_time = end_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
+                    
+                    start = start_time.strftime('%H:%M')
+                    end = end_time.strftime('%H:%M')
                     
                     schedule_data.append([
                         category["name"],
