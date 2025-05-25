@@ -14,6 +14,27 @@ SCHEDULE_CACHE_TTL = 600        # Cache time in seconds (10 minutes)
 TOURNAMENTS_CACHE_TTL = 3600    # Cache time in seconds (60 minutes)
 CACHE_SIZE = 50                 # Maximum number of items in cache
 TIMEZONE = pytz.timezone('Europe/Warsaw')
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+# Dictionary of allowed clubs
+ALLOWED_CLUBS = {
+    "academia_gorila_warszawa": {
+        "name": "Academia Gorila / Warszawa",
+        "display_name": "Academia Gorila (Warszawa)"
+    },
+    "academia_gorila_ruda_slaska": {
+        "name": "Academia Gorila / Ruda Śląska",
+        "display_name": "Academia Gorila (Ruda Śląska)"
+    },
+    "academia_gorila_bielsko_biala": {
+        "name": "Academia Gorila / Bielsko Biała",
+        "display_name": "Academia Gorila (Bielsko Biała)"
+    },
+    "mata_leao_jiu_jitsu_sochaczew": {
+        "name": "Mata Leao Jiu Jitsu / Sochaczew",
+        "display_name": "Mata Leao Jiu Jitsu (Sochaczew)"
+    }
+}
 
 # Initialize caches
 participants_cache = TTLCache(maxsize=CACHE_SIZE, ttl=PARTICIPANTS_CACHE_TTL)
@@ -33,8 +54,6 @@ def cache_with_ttl(cache):
             return result
         return wrapper
     return decorator
-TARGET_CLUB = "Academia Gorila / Warszawa"
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class APIError(Exception):
     """Custom exception for API-related errors."""
@@ -60,11 +79,18 @@ def make_api_request(url, cookies=None):
         raise APIError(f"Failed to fetch data from {url}: {str(e)}")
 
 @cache_with_ttl(participants_cache)
-def fetch_bjj_participants(event_id):
+def fetch_bjj_participants(event_id, club_id):
     """
-    Fetch BJJ participants for the given event ID.
+    Fetch BJJ participants for the given event ID and club.
     Results are cached to reduce API calls.
+    
+    Args:
+        event_id: ID of the tournament
+        club_id: ID of the club from ALLOWED_CLUBS dictionary
     """
+    if club_id not in ALLOWED_CLUBS:
+        raise ValueError(f"Club {club_id} is not in the allowed clubs list")
+        
     url = f"{BASE_URL}/pl/events/{event_id}/starting-lists"
     soup = BeautifulSoup(make_api_request(url).text, "html.parser")
     
@@ -92,7 +118,7 @@ def fetch_bjj_participants(event_id):
             continue  # Skip malformed data instead of failing
 
     df = pd.DataFrame(participant_data, columns=["Imię i nazwisko", "Klub", "Kategoria"])
-    return df[df["Klub"] == TARGET_CLUB]
+    return df[df["Klub"] == ALLOWED_CLUBS[club_id]["name"]]
 
 @cache_with_ttl(schedule_cache)
 def fetch_bjj_schedule(event_id):

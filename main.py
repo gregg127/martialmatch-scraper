@@ -32,10 +32,17 @@ async def get_tournaments():
     return {"tournaments": tournaments}
 
 
+@app.get("/api/clubs")
+async def get_clubs():
+    """Return all allowed clubs."""
+    from bjj_participants_scraper import ALLOWED_CLUBS
+    return {"clubs": [{"id": k, "display_name": v["display_name"]} for k, v in ALLOWED_CLUBS.items()]}
+
+
 @app.get("/api/participants/{event_id}")
-async def get_participants(event_id: str) -> Dict[str, Any]:
+async def get_participants(event_id: str, club_id: str) -> Dict[str, Any]:
     try:
-        participants = fetch_bjj_participants(event_id)
+        participants = fetch_bjj_participants(event_id, club_id)
         if participants.empty:
             return {"schedule": {}}
 
@@ -43,5 +50,7 @@ async def get_participants(event_id: str) -> Dict[str, Any]:
         schedule_per_day = merge_participants_with_schedule(participants, schedule)
         return {"schedule": schedule_per_day}
 
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
         error: document.getElementById('error'),
         scheduleContainer: document.getElementById('scheduleContainer'),
         tournamentSelect: document.getElementById('tournamentSelect'),
+        clubSelect: document.getElementById('clubSelect'),
         tournamentTypeRadios: document.getElementsByName('tournamentType')
     };
 
@@ -56,6 +57,31 @@ document.addEventListener('DOMContentLoaded', function () {
             : '<option value="">Brak turniejów</option>';
     }
 
+    // Initialize clubs dropdown
+    async function initializeClubs() {
+        elements.clubSelect.disabled = true;
+        elements.clubSelect.innerHTML = '<option value="">Ładuję kluby...</option>';
+
+        try {
+            const response = await fetch('/api/clubs');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Failed to fetch clubs');
+            }
+
+            elements.clubSelect.innerHTML = data.clubs.map(club => 
+                `<option value="${club.id}">${club.display_name}</option>`
+            ).join('');
+
+        } catch (err) {
+            elements.clubSelect.innerHTML = '<option value="">Błąd podczas ładowania klubów</option>';
+            console.error('Error fetching clubs:', err);
+        } finally {
+            elements.clubSelect.disabled = false;
+        }
+    }
+
     // Form submit handler
     async function handleFormSubmit(e) {
         e.preventDefault();
@@ -66,7 +92,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const eventId = elements.tournamentSelect.value;
-            const response = await fetch(`/api/participants/${eventId}`);
+            const clubId = elements.clubSelect.value;
+            const response = await fetch(`/api/participants/${eventId}?club_id=${clubId}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -77,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
             let scheduleHtml = '';
 
             if (Object.keys(data.schedule).length === 0) {
-                scheduleHtml = '<div class="error">Brak danych o harmonogramie dla tych zawodów.</div>';
+                scheduleHtml = '<div class="error">Nie znaleziono danych.</div>';
             } else {
                 for (const [day, scheduleItems] of Object.entries(data.schedule)) {
                     if (!scheduleItems || scheduleItems.length === 0) continue;
@@ -132,8 +159,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/'/g, "&#039;");
     }
 
-    // Initialize tournaments on page load
+    // Initialize tournaments and clubs on page load
     initializeTournaments();
+    initializeClubs();
 
     // Event listeners
     elements.form.addEventListener('submit', handleFormSubmit);
