@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize tournaments dropdown
     async function initializeTournaments() {
         elements.tournamentSelect.disabled = true;
-        elements.tournamentSelect.innerHTML = '<option value="">Ładuje...</option>';
+        elements.tournamentSelect.innerHTML = '<option value="">Pobieram...</option>';
 
         try {
             const response = await fetch('/api/tournaments');
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize clubs dropdown
     async function initializeClubs() {
         elements.clubSelect.disabled = true;
-        elements.clubSelect.innerHTML = '<option value="">Ładuję kluby...</option>';
+        elements.clubSelect.innerHTML = '<option value="">Pobieram...</option>';
 
         try {
             const response = await fetch('/api/clubs');
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ).join('');
 
         } catch (err) {
-            elements.clubSelect.innerHTML = '<option value="">Błąd podczas ładowania klubów</option>';
+            elements.clubSelect.innerHTML = '<option value="">Błąd podczas ładowania</option>';
             console.error('Error fetching clubs:', err);
         } finally {
             elements.clubSelect.disabled = false;

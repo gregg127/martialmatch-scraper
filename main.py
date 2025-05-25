@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
-from bjj_participants_scraper import (
+from martialmatch_scraper import (
     fetch_bjj_participants,
     fetch_bjj_schedule,
     merge_participants_with_schedule,
@@ -35,7 +35,7 @@ async def get_tournaments():
 @app.get("/api/clubs")
 async def get_clubs():
     """Return all allowed clubs."""
-    from bjj_participants_scraper import ALLOWED_CLUBS
+    from martialmatch_scraper import ALLOWED_CLUBS
     return {"clubs": [{"id": k, "display_name": v["display_name"]} for k, v in ALLOWED_CLUBS.items()]}
 
 
