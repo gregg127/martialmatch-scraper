@@ -1,151 +1,174 @@
+/* Custom Properties */
 :root {
+    /* Colors */
     --color-primary: #0a314c;
     --color-primary-light: #1470b6;
-    --color-primary-hover: #002042;
     --color-background: #f8f9fa;
     --color-white: #ffffff;
     --color-text: #333333;
     --color-text-light: #666666;
     --color-border: #dddddd;
-    --color-background-light: #f8f9fa;
     --color-error: #dc3545;
-    --color-error-background: #f8d7da;
-    --color-hover: #e9ecef;
-    --shadow-color: rgba(0, 0, 0, 0.1);
+    
+    /* Shadow */
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    /* Spacing - Using 8pt grid system */
+    --space: 1rem;
+    
+    /* Border Radius */
+    --radius: 8px;
+    
+    /* Font Size */
+    --font-small: 0.9rem;
+    --font-base: 1rem;
+    --font-large: 1.2rem;
 }
 
-/* Base Styles */
+/* Reset & Base Styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Arial', sans-serif;
-    margin: 0;
     background-color: var(--color-background);
+    line-height: 1.5;
+    color: var(--color-text);
 }
 
+/* Layout */
 .container {
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    padding: 15px;
-    box-sizing: border-box;
+    padding: var(--space);
 }
 
 /* Typography */
 h1 {
     color: var(--color-primary);
     text-align: center;
-    margin-bottom: 20px;
-    font-size: clamp(1.5rem, 5vw, 2rem);
+    margin-bottom: calc(2 * var(--space));
+    font-size: clamp(var(--font-large), 5vw, 2rem);
     word-wrap: break-word;
 }
 
-/* Application Description */
 .app-description {
     color: var(--color-text-light);
-    margin: 1.5rem auto;
+    margin: var(--space) auto;
     max-width: 600px;
-    line-height: 1.5;
-    font-size: 1rem;
+    font-size: var(--font-base);
     text-align: justify;
 }
 
 /* Form Styles */
 .form-container {
+    --form-max-width: 600px;
+    
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    max-width: 600px;
+    gap: calc(2 * var(--space));
+    max-width: var(--form-max-width);
     margin: 0 auto;
-    padding: 2rem;
+    padding: calc(2 * var(--space));
     background-color: var(--color-white);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px var(--shadow-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
 .form-section {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space);
 }
 
+/* Form Controls */
 .select-section {
     width: 100%;
 }
 
 .select-label {
+    display: block;
     font-weight: 500;
     color: var(--color-text);
-    margin-bottom: 0.5rem;
+    margin-bottom: calc(0.5 * var(--space));
 }
 
 select {
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
     width: 100%;
-    font-size: 16px;
+    padding: var(--space);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: var(--font-base);
     background-color: var(--color-white);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: var(--color-primary-light);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(20, 112, 182, 0.1);
+    }
+
+    &:disabled {
+        background-color: var(--color-background);
+        cursor: not-allowed;
+    }
 }
 
-select:hover {
-    border-color: var(--color-primary-light);
-}
-
-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(20, 112, 182, 0.1);
-}
-
-select:disabled {
-    background-color: var(--color-background-light);
-    cursor: not-allowed;
-}
-
+/* Button Styles */
 .button-section {
     display: flex;
     justify-content: center;
-    margin-top: 1rem;
+    margin-top: var(--space-md);
 }
 
 button {
-    padding: 14px 32px;
+    --btn-min-width: 200px;
+    
+    min-width: var(--btn-min-width);
+    padding: var(--space);
     background-color: var(--color-primary);
     color: var(--color-white);
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
+    border-radius: var(--radius);
+    font-size: var(--font-base);
     font-weight: 600;
+    cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 200px;
-}
 
-button:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+    &:hover {
+        background-color: var(--color-primary-light);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+    }
 
-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    &:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow);
+    }
 }
 
 /* Status and Feedback */
 .error {
     color: var(--color-error);
     text-align: center;
-    padding: 10px;
-    margin: 10px 0;
-    background-color: var(--color-error-background);
-    border-radius: 4px;
+    padding: var(--space);
+    margin: var(--space) 0;
+    background-color: #f8d7da;
+    border-radius: var(--radius);
 }
 
 #loading {
     text-align: center;
-    padding: 20px;
-    font-size: 18px;
+    padding: calc(2 * var(--space));
+    font-size: var(--font-large);
     color: var(--color-text-light);
 }
 
@@ -165,22 +188,22 @@ button:active {
 .schedule-container table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 40px;
+    margin-bottom: calc(2 * var(--space));
     background-color: var(--color-white);
-    box-shadow: 0 1px 3px var(--shadow-color);
-    border-radius: 8px;
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
     overflow: hidden;
 }
 
 .schedule-container th,
 .schedule-container td {
-    padding: 12px 15px;
+    padding: var(--space);
     text-align: left;
     border-bottom: 1px solid var(--color-border);
 }
 
 .schedule-container th {
-    background-color: var(--color-background-light);
+    background-color: var(--color-background);
     color: var(--color-primary-light);
     font-weight: 600;
 }
@@ -221,17 +244,17 @@ button:active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 24px;
+    padding: var(--space);
     background-color: var(--color-white);
     border: 2px solid var(--color-primary);
-    border-radius: 8px;
+    border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
 }
 
 .radio-group label:hover {
-    background-color: var(--color-background-light);
+    background-color: var(--color-background);
 }
 
 .radio-group input[type="radio"] {
@@ -244,7 +267,7 @@ button:active {
 }
 
 .radio-group label:has(input[type="radio"]:checked) {
-    background-color: var(--color-background-light);
+    background-color: var(--color-background);
     border-color: var(--color-primary);
     box-shadow: 0 2px 4px var(--shadow-color);
 }
@@ -354,12 +377,11 @@ button:active {
 
 /* Footer Styles */
 .footer {
-    margin-top: 4rem;
-    padding: 1.5rem;
+    width: 100%;
+    margin-top: calc(4 * var(--space));
+    padding: var(--space);
     color: var(--color-text-light);
     border-top: 1px solid var(--color-border);
-    box-shadow: 0 -2px 4px var(--shadow-color);
-    width: 100%;
     position: relative;
     display: flex;
     justify-content: center;
@@ -369,39 +391,41 @@ button:active {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: calc(0.5 * var(--space));
 }
 
-.footer p {
-    margin: 0;
-    font-size: 0.9rem;
-    text-align: center;
-}
+.footer {
+    p {
+        margin: 0;
+        font-size: var(--font-sm);
+        text-align: center;
+    }
 
-.footer a {
-    color: var(--color-primary-light);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
+    a {
+        color: var(--color-primary-light);
+        text-decoration: none;
+        transition: color 0.2s ease;
 
-.footer a:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
+        &:hover {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+    }
 }
 
 /* GitHub Link Styles */
 .github-link {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: calc(0.3 * var(--space));
 }
 
 .github-icon {
     width: 16px;
     height: 16px;
     transition: opacity 0.2s ease;
-}
 
-.github-link:hover .github-icon {
-    opacity: 0.8;
+    .github-link:hover & {
+        opacity: 0.8;
+    }
 }
