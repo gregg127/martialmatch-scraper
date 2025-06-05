@@ -3,7 +3,7 @@ FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
 # Create a non-root user
 RUN adduser --disabled-password --gecos "" appuser
