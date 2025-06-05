@@ -22,7 +22,7 @@ spec:
       containers:
         - name: martialmatch-scraper
           # private registry
-          image: harbor.golebiowski.dev/services/martialmatch-scraper:latest
+          image: harbor.golebiowski.dev/services/martialmatch-scraper:1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
