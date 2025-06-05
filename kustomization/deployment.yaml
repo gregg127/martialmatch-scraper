@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: martialmatch-scraper
+  labels:
+    app: martialmatch-scraper
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: martialmatch-scraper
+  template:
+    metadata:
+      labels:
+        app: martialmatch-scraper
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      containers:
+        - name: martialmatch-scraper
+          # private registry
+          image: harbor.golebiowski.dev/services/martialmatch-scraper:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "400m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      imagePullSecrets:
+        - name: harbor-registry-key
