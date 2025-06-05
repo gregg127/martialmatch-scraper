@@ -19,7 +19,10 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 log "Building Docker image with version $VERSION..."
-docker build --platform linux/amd64,linux/arm64 --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$VERSION" -f Dockerfile .
+if ! docker build --platform linux/amd64,linux/arm64 --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$VERSION" -f Dockerfile .; then
+    log "Error: Docker build failed"
+    exit 1
+fi
 
 log "Pushing Docker image to registry..."
 docker push "$IMAGE_NAME:$VERSION"
