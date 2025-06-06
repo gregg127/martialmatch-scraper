@@ -302,7 +302,7 @@ button {
     }
 
     .app-description {
-        text-align: center;
+        text-align: left;
         margin: var(--space);
         font-size: var(--font-small);
         padding: 0 calc(0.5 * var(--space));
