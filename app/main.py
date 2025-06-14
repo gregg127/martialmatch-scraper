@@ -1,7 +1,5 @@
-# Standard library imports
 from typing import Dict, Any
 
-# Third-party imports
 from fastapi import FastAPI, HTTPException, Query, Path
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -9,7 +7,6 @@ from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator, ValidationError as PydanticValidationError
 
-# Local imports
 from martialmatch_scraper import (
     fetch_bjj_participants,
     fetch_bjj_schedule,
@@ -20,7 +17,6 @@ from martialmatch_scraper import (
 
 app = FastAPI()
 
-# Mount static files directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
@@ -45,19 +41,20 @@ async def get_clubs():
     return {"clubs": [{"id": k, "display_name": v["display_name"]} for k, v in ALLOWED_CLUBS.items()]}
 
 
-@app.get("/api/participants/{event_id}")
+@app.get("/api/participants")
 async def get_participants(
-    event_id: str = Path(..., description="Tournament event ID"),
-    club_id: str = Query(..., description="Club ID from allowed clubs")
+    event_id: str = Query(..., description="Tournament event ID"),
+    club_id: str = Query(..., description="Club ID from allowed clubs"),
+    schedule_type: str = Query(..., description="Type of schedule to fetch (planned or real)")
 ) -> Dict[str, Any]:
     try:
-        params = ParticipantRequest(event_id=event_id, club_id=club_id)
+        params = ParticipantRequest(event_id=event_id, club_id=club_id, schedule_type=schedule_type)
         
         participants = fetch_bjj_participants(params.event_id, params.club_id)
         if participants.empty:
             return {"schedule": {}}
 
-        schedule = fetch_bjj_schedule(event_id)
+        schedule = fetch_bjj_schedule(event_id, schedule_type)
         schedule_per_day = merge_participants_with_schedule(participants, schedule)
         return {"schedule": schedule_per_day}
 
@@ -72,12 +69,21 @@ async def get_participants(
 class ParticipantRequest(BaseModel):
     event_id: str = Field(..., min_length=1, max_length=100, description="Tournament event ID")
     club_id: str = Field(..., min_length=1, max_length=100, description="Club ID from allowed clubs")
+    schedule_type: str = Field(..., description="Type of schedule to fetch (planned or real)")
 
-    @field_validator('event_id', 'club_id')
+    @field_validator('event_id', 'club_id', 'schedule_type')
     @classmethod
     def strip_value(cls, v: str) -> str:
         """Strip whitespace from input values."""
         return v.strip()
+
+    @field_validator('schedule_type')
+    @classmethod
+    def validate_schedule_type(cls, v: str) -> str:
+        """Validate that schedule_type is either 'planned' or 'real'."""
+        if v not in ['planned', 'real']:
+            raise ValueError("Schedule type must be either 'planned' or 'real'")
+        return v
 
     @field_validator('club_id')
     @classmethod

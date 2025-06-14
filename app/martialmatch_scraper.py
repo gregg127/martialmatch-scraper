@@ -7,7 +7,6 @@ from cachetools import TTLCache
 from functools import wraps
 import pytz
 
-# Constants
 BASE_URL = "https://martialmatch.com"
 PARTICIPANTS_CACHE_TTL = 1800   # Cache time in seconds (30 minutes)
 SCHEDULE_CACHE_TTL = 600        # Cache time in seconds (10 minutes)
@@ -16,7 +15,6 @@ CACHE_SIZE = 50                 # Maximum number of items in cache
 TIMEZONE = pytz.timezone('Europe/Warsaw')
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-# Dictionary of allowed clubs
 ALLOWED_CLUBS = {
     "academia_gorila_warszawa": {
         "name": "Academia Gorila / Warszawa",
@@ -36,7 +34,6 @@ ALLOWED_CLUBS = {
     }
 }
 
-# Initialize caches
 participants_cache = TTLCache(maxsize=CACHE_SIZE, ttl=PARTICIPANTS_CACHE_TTL)
 schedule_cache = TTLCache(maxsize=CACHE_SIZE, ttl=SCHEDULE_CACHE_TTL)
 tournaments_cache = TTLCache(maxsize=CACHE_SIZE, ttl=TOURNAMENTS_CACHE_TTL)
@@ -55,19 +52,15 @@ def cache_with_ttl(cache):
         return wrapper
     return decorator
 
-class APIError(Exception):
-    """Custom exception for API-related errors."""
-    pass
-
 def extract_numeric_id(event_id):
     """Extract numeric ID from event identifier."""
     match = re.search(r'\d+', str(event_id))
     if not match:
-        raise ValueError("Invalid event ID format")
+        raise ValueError(f"Invalid event ID format for input: {event_id}")
     return match.group(0)
 
 def make_api_request(url, cookies=None):
-    """Make an API request with error handling."""
+    """Make an API request."""
     try:
         response = requests.get(
             url, 
@@ -76,7 +69,7 @@ def make_api_request(url, cookies=None):
         response.raise_for_status()
         return response
     except requests.RequestException as e:
-        raise APIError(f"Failed to fetch data from {url}: {str(e)}")
+        raise Exception(f"Failed to fetch data from {url}: {str(e)}")
 
 @cache_with_ttl(participants_cache)
 def fetch_bjj_participants(event_id, club_id):
@@ -121,10 +114,14 @@ def fetch_bjj_participants(event_id, club_id):
     return df[df["Klub"] == ALLOWED_CLUBS[club_id]["name"]]
 
 @cache_with_ttl(schedule_cache)
-def fetch_bjj_schedule(event_id):
+def fetch_bjj_schedule(event_id, schedule_type='planned'):
     """
     Fetch BJJ competition schedule from the MartialMatch API.
     Results are cached to reduce API calls.
+
+    Args:
+        event_id: ID of the tournament
+        schedule_type: 'planned' for scheduled time, 'real' for real-time schedule
     """
     numeric_id = extract_numeric_id(event_id)
     url = f"{BASE_URL}/api/events/{numeric_id}/schedules"
@@ -134,6 +131,11 @@ def fetch_bjj_schedule(event_id):
     schedule_data = []
 
     for day in json_data.get("schedules", []):
+        
+        if schedule_type == "real" and day.get("sharing") != 3:
+            # Skip days that are not part of the real-time schedule
+            continue
+        
         for mat in day.get("mats", []):
             for category in mat.get("categories", []):
                 try:
