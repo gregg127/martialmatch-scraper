@@ -98,19 +98,19 @@ def test_get_tournaments():
     ("123", VALID_CLUB_ID, "real", 500, "valid_request_real_schedule"),
     
     # Invalid club validation
-    ("123", "invalid_club", "planned", 422, "invalid_club_id"),
+    ("123", "invalid_club", "planned", 400, "invalid_club_id"),
     
     # Empty parameter validation
-    ("", VALID_CLUB_ID, "planned", 422, "empty_event_id"),
-    ("123", "", "planned", 422, "empty_club_id"),
-    ("123", VALID_CLUB_ID, "", 422, "empty_schedule_type"),
+    ("", VALID_CLUB_ID, "planned", 400, "empty_event_id"),
+    ("123", "", "planned", 400, "empty_club_id"),
+    ("123", VALID_CLUB_ID, "", 400, "empty_schedule_type"),
     
     # Field length validation
-    ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID, "planned", 422, "event_id_too_long"),
-    ("123", "x" * (MAX_FIELD_LENGTH + 1), "planned", 422, "club_id_too_long"),
+    ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID, "planned", 400, "event_id_too_long"),
+    ("123", "x" * (MAX_FIELD_LENGTH + 1), "planned", 400, "club_id_too_long"),
     
     # Invalid enum values
-    ("123", VALID_CLUB_ID, "invalid", 422, "invalid_schedule_type"),
+    ("123", VALID_CLUB_ID, "invalid", 400, "invalid_schedule_type"),
 ])
 def test_get_participants_validation(event_id, club_id, schedule_type, expected_status, test_case):
     """Test validation for /api/participants endpoint

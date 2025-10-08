@@ -58,11 +58,12 @@ async def get_participants(
         schedule_per_day = merge_participants_with_schedule(participants, schedule)
         return {"schedule": schedule_per_day}
 
-    except PydanticValidationError:
-        raise HTTPException(status_code=422, detail="Validation error")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Validation error")
-    except Exception:
+    except PydanticValidationError as e:
+        error_msg = e.errors()[0]['msg'] if e.errors() else "Validation error"
+        raise HTTPException(status_code=400, detail=error_msg)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=e.args[0] if e.args else str(e))
+    except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 # Models for validation
