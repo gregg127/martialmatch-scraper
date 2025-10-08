@@ -8,11 +8,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator, ValidationError as PydanticValidationError
 
 from martialmatch_scraper import (
-    fetch_bjj_participants,
-    fetch_bjj_schedule,
-    merge_participants_with_schedule,
+    get_participants_schedule,
     fetch_all_tournament_ids,
-    ALLOWED_CLUBS
+    ALLOWED_CLUBS,
+    ALLOWED_SCHEDULE_TYPES
 )
 
 app = FastAPI()
@@ -50,12 +49,7 @@ async def get_participants(
     try:
         params = ParticipantRequest(event_id=event_id, club_id=club_id, schedule_type=schedule_type)
         
-        participants = fetch_bjj_participants(params.event_id, params.club_id)
-        if participants.empty:
-            return {"schedule": {}}
-
-        schedule = fetch_bjj_schedule(event_id, schedule_type)
-        schedule_per_day = merge_participants_with_schedule(participants, schedule)
+        schedule_per_day = get_participants_schedule(params.event_id, params.club_id, params.schedule_type)
         return {"schedule": schedule_per_day}
 
     except PydanticValidationError as e:
@@ -65,6 +59,7 @@ async def get_participants(
         raise HTTPException(status_code=400, detail=e.args[0] if e.args else str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 # Models for validation
 class ParticipantRequest(BaseModel):
@@ -82,15 +77,15 @@ class ParticipantRequest(BaseModel):
     @classmethod
     def validate_schedule_type(cls, v: str) -> str:
         """Validate that schedule_type is either 'planned' or 'real'."""
-        if v not in ['planned', 'real']:
-            raise ValueError("Schedule type must be either 'planned' or 'real'")
+        if v not in ALLOWED_SCHEDULE_TYPES:
+            allowed_types = list(ALLOWED_SCHEDULE_TYPES.keys())
+            raise ValueError(f"Schedule type must be one of: {', '.join(allowed_types)}")
         return v
 
     @field_validator('club_id')
     @classmethod
     def validate_club_exists(cls, v: str) -> str:
         """Validate that the club exists in ALLOWED_CLUBS."""
-        from martialmatch_scraper import ALLOWED_CLUBS
         if v not in ALLOWED_CLUBS:
             raise ValueError(f'Club ID {v} is not in the allowed clubs list')
         return v
