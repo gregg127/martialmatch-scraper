@@ -24,7 +24,7 @@ Therefore, I created this simple app that:
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/gregg127/martialmatch-scraper
 cd martialmatch-scraper
 ```
 
