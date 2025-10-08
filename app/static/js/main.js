@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Constants
+    const MAX_ACTIVE_TOURNAMENTS = 5;
+    
     // DOM Elements
     const elements = {
         form: document.getElementById('tournamentForm'),
@@ -49,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateTournamentList(showArchived) {
         let tournaments = showArchived ? tournamentData.archived : tournamentData.active;
         if (!showArchived) {
-            tournaments = tournaments.slice(0, 5);
+            tournaments = tournaments.slice(0, MAX_ACTIVE_TOURNAMENTS);
         }
         elements.tournamentSelect.innerHTML = tournaments.length 
             ? tournaments.map(tournament => 
