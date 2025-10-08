@@ -29,10 +29,6 @@ ALLOWED_CLUBS = {
         "name": "Academia Gorila / Bielsko Biała",
         "display_name": "Academia Gorila (Bielsko Biała)"
     },
-    "mata_leao_jiu_jitsu_sochaczew": {
-        "name": "Mata Leao Jiu Jitsu / Sochaczew",
-        "display_name": "Mata Leao Jiu Jitsu (Sochaczew)"
-    }
 }
 
 ALLOWED_SCHEDULE_TYPES = {
