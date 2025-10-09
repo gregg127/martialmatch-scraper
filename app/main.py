@@ -11,7 +11,10 @@ from martialmatch_scraper import (
     get_participants_schedule,
     fetch_all_tournament_ids,
     ALLOWED_CLUBS,
-    ALLOWED_SCHEDULE_TYPES
+    ALLOWED_SCHEDULE_TYPES,
+    ScheduleNotFoundError,
+    ParticipantsNotFoundError,
+    EventNotFoundError
 )
 
 app = FastAPI()
@@ -55,6 +58,8 @@ async def get_participants(
     except PydanticValidationError as e:
         error_msg = e.errors()[0]['msg'] if e.errors() else "Validation error"
         raise HTTPException(status_code=400, detail=error_msg)
+    except (EventNotFoundError, ScheduleNotFoundError, ParticipantsNotFoundError) as e:
+        return {"schedule": {}, "message": str(e)}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=e.args[0] if e.args else str(e))
     except Exception as e:

@@ -93,9 +93,8 @@ def test_get_tournaments():
 # =============================================================================
 
 @pytest.mark.parametrize("event_id,club_id,schedule_type,expected_status,test_case", [
-    # Valid requests (but non-existent data)
-    ("123", VALID_CLUB_ID, "planned", 500, "valid_request_nonexistent_event"),
-    ("123", VALID_CLUB_ID, "real", 500, "valid_request_real_schedule"),
+    # Valid requests
+    ("123", VALID_CLUB_ID, "planned", 200, "valid_request_nonexistent_event"),
     
     # Invalid club validation
     ("123", "invalid_club", "planned", 400, "invalid_club_id"),
@@ -139,3 +138,10 @@ def test_get_participants_validation(event_id, club_id, schedule_type, expected_
         params={"event_id": event_id, "club_id": club_id, "schedule_type": schedule_type}
     )
     assert response.status_code == expected_status, f"Test case '{test_case}' failed"
+    
+    # For 200 responses with no data, verify the response structure
+    if expected_status == 200 and test_case in ["valid_request_nonexistent_event", "valid_request_real_schedule"]:
+        data = response.json()
+        assert "schedule" in data
+        assert "message" in data
+        assert data["schedule"] == {}

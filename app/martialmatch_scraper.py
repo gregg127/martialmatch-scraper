@@ -6,7 +6,32 @@ from cachetools import TTLCache
 from functools import wraps
 import pytz
 
-from utils import extract_numeric_id, make_api_request
+from utils import extract_numeric_id, make_api_request, EventNotFoundHTTPError
+
+
+# Error messages
+NO_PARTICIPANTS_MESSAGE = "Nie znaleziono zawodników tego klubu w tym turnieju"
+NO_SCHEDULE_MESSAGE = "Brak harmonogramu wskazanego typu dla tego turnieju"
+EVENT_NOT_FOUND_MESSAGE = "Nie znaleziono turnieju"
+
+
+class ScheduleNotFoundError(Exception):
+    """Raised when no schedule data is available for the requested event."""
+    def __init__(self, message=NO_SCHEDULE_MESSAGE):
+        super().__init__(message)
+
+
+class ParticipantsNotFoundError(Exception):
+    """Raised when no participants are found for the requested club and event."""
+    def __init__(self, message=NO_PARTICIPANTS_MESSAGE):
+        super().__init__(message)
+
+
+class EventNotFoundError(Exception):
+    """Raised when the requested event does not exist (404 error)."""
+    def __init__(self, message=EVENT_NOT_FOUND_MESSAGE):
+        super().__init__(message)
+
 
 BASE_URL = "https://martialmatch.com"
 PARTICIPANTS_CACHE_TTL = 1800   # Cache time in seconds (30 minutes)
@@ -72,10 +97,14 @@ def fetch_bjj_participants(event_id, club_id):
     """
     if club_id not in ALLOWED_CLUBS:
         raise ValueError(f"Club {club_id} is not in the allowed clubs list")
-        
     url = f"{BASE_URL}/pl/events/{event_id}/starting-lists"
-    soup = BeautifulSoup(make_api_request(url).text, "html.parser")
-    
+    try:
+        response = make_api_request(url)
+        soup = BeautifulSoup(response.text, "html.parser")
+    except EventNotFoundHTTPError:
+        raise EventNotFoundError()
+    except Exception:
+        raise  # Re-raise other exceptions as-is
     participant_data = []
     categories = soup.find_all("div", class_="column is-offset-2 is-8")
 
@@ -118,7 +147,7 @@ def fetch_bjj_schedule(event_id, schedule_type):
 
     json_data = make_api_request(url, cookies).json()
     schedule_data = []
-
+    
     for day in json_data.get("schedules", []):
         
         if schedule_type == ALLOWED_SCHEDULE_TYPES['real']['name'] and day.get("sharing") != 3:
@@ -197,17 +226,18 @@ def get_participants_schedule(event_id, club_id, schedule_type):
     """
     participants = fetch_bjj_participants(event_id, club_id)
     if participants.empty:
-        return {}
+        raise ParticipantsNotFoundError()
 
     schedule = fetch_bjj_schedule(event_id, schedule_type)
+    if schedule.empty:
+        raise ScheduleNotFoundError()
+    
     return merge_participants_with_schedule(participants, schedule)
 
 
 def merge_participants_with_schedule(participants, schedule):
     """Merge participants data with schedule data and group by day."""
-    if schedule.empty:
-        return {}
-        
+ 
     schedule_per_day = {}
     for day in schedule['Dzień'].unique():
         day_schedule = schedule[schedule['Dzień'] == day]

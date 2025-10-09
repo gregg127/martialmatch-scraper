@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Constants
-    const MAX_ACTIVE_TOURNAMENTS = 5;
+    const MAX_ACTIVE_TOURNAMENTS = 10;
     
     // DOM Elements
     const elements = {
@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', function () {
             let scheduleHtml = '';
 
             if (Object.keys(data.schedule).length === 0) {
-                scheduleHtml = '<div class="error">Nie znaleziono danych.</div>';
+                const errorMessage = data.message || 'Nie znaleziono danych.';
+                scheduleHtml = `<div class="error">${escapeHtml(errorMessage)}</div>`;
             } else {
                 for (const [day, scheduleItems] of Object.entries(data.schedule)) {
                     if (!scheduleItems || scheduleItems.length === 0) continue;
