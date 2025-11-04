@@ -498,13 +498,6 @@ button {
     }
 }
 
-/* Server Time Styles */
-.server-time {
-    font-size: var(--font-small);
-    color: var(--color-text-light);
-    font-style: italic;
-}
-
 /* Time-based Row Coloring */
 .time-past {
     background-color: #ffebee !important; /* Light red background for past events */

@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Initialize server time display and store timestamp
+    // Fetch server timestamp for time-based row coloring
     async function initializeServerTime() {
         try {
             const response = await fetch('/api/server-time');
@@ -214,16 +214,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 // Store server timestamp directly from response
                 serverTimestamp = data.timestamp;
-                
-                // Create date object for display
-                const serverDate = new Date(data.timestamp * 1000);
-                const serverTimeElement = document.getElementById('serverTime');
-                serverTimeElement.textContent = `Czas serwera: ${serverDate.toLocaleString('pl-PL')}`;
             }
         } catch (err) {
             console.error('Error fetching server time:', err);
-            const serverTimeElement = document.getElementById('serverTime');
-            serverTimeElement.textContent = 'Czas serwera: niedostępny';
             serverTimestamp = null; // Ensure it's null on error
         }
     }
