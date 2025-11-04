@@ -194,9 +194,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Initialize server time display
+    async function initializeServerTime() {
+        try {
+            const response = await fetch('/api/server-time');
+            const data = await response.json();
+
+            if (response.ok) {
+                const serverTimeElement = document.getElementById('serverTime');
+                serverTimeElement.textContent = `Czas serwera: ${data.server_time} (${data.timezone})`;
+            }
+        } catch (err) {
+            console.error('Error fetching server time:', err);
+            const serverTimeElement = document.getElementById('serverTime');
+            serverTimeElement.textContent = 'Czas serwera: niedostępny';
+        }
+    }
+
     // Initialize tournaments and clubs on page load
     initializeTournaments();
     initializeClubs();
+    initializeServerTime();
 
     // Event listeners
     elements.form.addEventListener('submit', handleFormSubmit);

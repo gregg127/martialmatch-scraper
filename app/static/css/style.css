@@ -495,3 +495,9 @@ button {
         opacity: 0.8;
     }
 }
+
+/* Server Time Styles */
+.server-time {
+    font-size: var(--font-small);
+    color: var(--color-text-light);
+}

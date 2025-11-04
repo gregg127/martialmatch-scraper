@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Query, Path
 from fastapi.responses import HTMLResponse
@@ -14,7 +15,8 @@ from martialmatch_scraper import (
     ALLOWED_SCHEDULE_TYPES,
     ScheduleNotFoundError,
     ParticipantsNotFoundError,
-    EventNotFoundError
+    EventNotFoundError,
+    TIMEZONE
 )
 
 app = FastAPI()
@@ -41,6 +43,17 @@ async def get_tournaments():
 async def get_clubs():
     """Return all allowed clubs."""
     return {"clubs": [{"id": k, "display_name": v["display_name"]} for k, v in ALLOWED_CLUBS.items()]}
+
+
+@app.get("/api/server-time")
+async def get_server_time():
+    """Return current server time."""
+    current_time = datetime.now(TIMEZONE)
+    return {
+        "server_time": current_time.strftime("%Y-%m-%d %H:%M:%S"),
+        "timezone": str(TIMEZONE),
+        "iso_format": current_time.isoformat()
+    }
 
 
 @app.get("/api/participants")
