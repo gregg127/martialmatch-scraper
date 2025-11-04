@@ -116,34 +116,40 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!scheduleItems || scheduleItems.length === 0) continue;
 
                     scheduleHtml += `
-                        <h3>${day}</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th data-column="name">Imię i nazwisko</th>
-                                    <th data-column="category" class="category-header">Kategoria</th>
-                                    <th data-column="mat">Mata</th>
-                                    <th data-column="time">Czas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${scheduleItems.map(item => {
-                                    const timeStr = item["Szacowany czas"] || '';
-                                    return `
-                                        <tr>
-                                            <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || '-')}</td>
-                                            <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || '-')}</td>
-                                            <td data-column="mat">${escapeHtml(item.Mata || '-')}</td>
-                                            <td data-column="time">${escapeHtml(timeStr || '-')}</td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
+                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">▶</span></h3>
+                        <div class="collapsible-content" style="display: none;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th data-column="name">Imię i nazwisko</th>
+                                        <th data-column="category" class="category-header">Kategoria</th>
+                                        <th data-column="mat">Mata</th>
+                                        <th data-column="time">Czas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${scheduleItems.map(item => {
+                                        const timeStr = item["Szacowany czas"] || '';
+                                        return `
+                                            <tr>
+                                                <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || '-')}</td>
+                                                <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || '-')}</td>
+                                                <td data-column="mat">${escapeHtml(item.Mata || '-')}</td>
+                                                <td data-column="time">${escapeHtml(timeStr || '-')}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     `;
                 }
             }
             elements.scheduleContainer.innerHTML = scheduleHtml;
+            
+            // Add collapsible functionality
+            addCollapsibleBehavior();
+            
             elements.results.style.display = 'block';
             elements.loading.style.display = 'none';
 
@@ -163,6 +169,29 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function addCollapsibleBehavior() {
+        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+        
+        collapsibleHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const indicator = this.querySelector('.collapse-indicator');
+                
+                if (this.classList.contains('collapsed')) {
+                    // Expand
+                    content.style.display = 'block';
+                    indicator.textContent = '▼';
+                    this.classList.remove('collapsed');
+                } else {
+                    // Collapse
+                    content.style.display = 'none';
+                    indicator.textContent = '▶';
+                    this.classList.add('collapsed');
+                }
+            });
+        });
     }
 
     // Initialize tournaments and clubs on page load

@@ -183,6 +183,47 @@ button {
     border-bottom: 2px solid var(--color-primary);
 }
 
+/* Collapsible Header Styles */
+.collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    border-radius: var(--radius);
+    padding: 12px 15px !important;
+    background-color: var(--color-white);
+    box-shadow: var(--shadow);
+    margin-bottom: 5px !important;
+}
+
+.collapsible-header:hover {
+    background-color: var(--color-background);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.collapsible-header.collapsed {
+    margin-bottom: 20px !important;
+}
+
+.collapse-indicator {
+    font-size: 0.8em;
+    transition: transform 0.3s ease;
+    color: var(--color-primary);
+    font-weight: bold;
+}
+
+.collapsible-header.collapsed .collapse-indicator {
+    transform: rotate(-90deg);
+}
+
+.collapsible-content {
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
 /* Table Styles */
 .schedule-container table {
     width: 100%;
@@ -334,6 +375,16 @@ button {
     .schedule-container h3 {
         font-size: 1.2rem;
         padding: 8px;
+    }
+
+    /* Collapsible header mobile adjustments */
+    .collapsible-header {
+        padding: 10px 12px !important;
+        font-size: 1.1rem;
+    }
+
+    .collapse-indicator {
+        font-size: 0.9em;
     }
 
     /* Grid Layout */
