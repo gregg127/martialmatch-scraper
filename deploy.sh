@@ -19,17 +19,12 @@ else
     log "Detected Linux - building for single platform: $PLATFORMS"
 fi
 
-_log() {
-  local output_stream=${2:-1}
-  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" >&$output_stream
-}
-
 log() {
-  _log "$1" 1
+  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1"
 }
 
 log_error() {
-  _log "Error: $1" 2
+  echo -e "\033[31m$(date +"%Y-%m-%d %H:%M:%S") - Error: $1\033[0m" >&2
 }
 
 if ! docker info > /dev/null 2>&1; then
