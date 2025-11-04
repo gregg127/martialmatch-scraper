@@ -9,9 +9,11 @@
     --color-text-light: #666666;
     --color-border: #dddddd;
     --color-error: #dc3545;
+    --color-hover: #f0f0f0;
     
     /* Shadow */
     --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.1);
     
     /* Spacing - Using 8pt grid system */
     --space: 1rem;
@@ -263,7 +265,7 @@ button {
 
 /* Hover States */
 .schedule-container tbody > tr:hover {
-    background-color: var(--color-hover) !important;
+    background-color: var(--color-hover);
 }
 
 /* Tournament Type Selection Styles */
@@ -463,7 +465,7 @@ button {
 .footer {
     p {
         margin: 0;
-        font-size: var(--font-sm);
+        font-size: var(--font-small);
         text-align: center;
     }
 
