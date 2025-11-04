@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Store tournament data
     let tournamentData = { active: [], archived: [] };
+    let serverTimestamp = null; // Store server timestamp globally
 
     // Initialize tournaments dropdown
     async function initializeTournaments() {
@@ -129,9 +130,19 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </thead>
                                 <tbody>
                                     ${scheduleItems.map(item => {
-                                        const timeStr = item["Szacowany czas"] || '';
+                                        const timeStr = item["Czas"] || '';
+                                        const endTimestamp = item["End timestamp"];
+                                        
+                                        // Determine row color based on server time (only if serverTimestamp is available)
+                                        let rowClass = '';
+                                        if (serverTimestamp && endTimestamp) {
+                                            if (serverTimestamp > endTimestamp) {
+                                                rowClass = 'time-past';
+                                            }
+                                        }
+                                        
                                         return `
-                                            <tr>
+                                            <tr class="${rowClass}">
                                                 <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || '-')}</td>
                                                 <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || '-')}</td>
                                                 <td data-column="mat">${escapeHtml(item.Mata || '-')}</td>
@@ -194,20 +205,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Initialize server time display
+    // Initialize server time display and store timestamp
     async function initializeServerTime() {
         try {
             const response = await fetch('/api/server-time');
             const data = await response.json();
 
             if (response.ok) {
+                // Store server timestamp directly from response
+                serverTimestamp = data.timestamp;
+                
+                // Create date object for display
+                const serverDate = new Date(data.timestamp * 1000);
                 const serverTimeElement = document.getElementById('serverTime');
-                serverTimeElement.textContent = `Czas serwera: ${data.server_time} (${data.timezone})`;
+                serverTimeElement.textContent = `Czas serwera: ${serverDate.toLocaleString('pl-PL')}`;
             }
         } catch (err) {
             console.error('Error fetching server time:', err);
             const serverTimeElement = document.getElementById('serverTime');
             serverTimeElement.textContent = 'Czas serwera: niedostępny';
+            serverTimestamp = null; // Ensure it's null on error
         }
     }
 

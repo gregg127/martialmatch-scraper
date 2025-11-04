@@ -48,12 +48,7 @@ async def get_clubs():
 @app.get("/api/server-time")
 async def get_server_time():
     """Return current server time."""
-    current_time = datetime.now(TIMEZONE)
-    return {
-        "server_time": current_time.strftime("%Y-%m-%d %H:%M:%S"),
-        "timezone": str(TIMEZONE),
-        "iso_format": current_time.isoformat()
-    }
+    return {"timestamp": int(datetime.now().timestamp())}
 
 
 @app.get("/api/participants")

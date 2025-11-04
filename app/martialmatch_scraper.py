@@ -162,22 +162,28 @@ def fetch_bjj_schedule(event_id, schedule_type):
                     end_time = datetime.strptime(times["end"], DATE_FORMAT)
                     
                     # Convert to Polish timezone
-                    start_time = start_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
-                    end_time = end_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
+                    start_time_tz = start_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
+                    end_time_tz = end_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
                     
-                    start = start_time.strftime('%H:%M')
-                    end = end_time.strftime('%H:%M')
+                    start = start_time_tz.strftime('%H:%M')
+                    end = end_time_tz.strftime('%H:%M')
                     
+                    # Get timestamps
+                    start_timestamp = int(start_time_tz.timestamp())
+                    end_timestamp = int(end_time_tz.timestamp())
+
                     schedule_data.append([
                         category["name"],
                         mat["name"],
+                        day["name"],
                         f"{start} - {end}",
-                        day["name"]
+                        start_timestamp,
+                        end_timestamp
                     ])
                 except (KeyError, ValueError):
                     continue  # Skip invalid time data
 
-    return pd.DataFrame(schedule_data, columns=["Kategoria", "Mata", "Szacowany czas", "Dzień"])
+    return pd.DataFrame(schedule_data, columns=["Kategoria", "Mata", "Dzień", "Czas", "Start timestamp", "End timestamp"])
 
 
 def fetch_all_tournament_ids():
@@ -245,7 +251,7 @@ def merge_participants_with_schedule(participants, schedule):
         
         if not merged.empty:
             merged = merged.copy()
-            merged['start_time'] = merged['Szacowany czas'].str.extract(r'(\d{2}:\d{2}) -')
+            merged['start_time'] = merged['Czas'].str.extract(r'(\d{2}:\d{2}) -')
             merged = (merged.sort_values(['start_time', 'Imię i nazwisko']).drop('start_time', axis=1))
             schedule_per_day[day] = merged.to_dict(orient='records')
     

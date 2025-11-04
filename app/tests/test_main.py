@@ -123,8 +123,10 @@ def test_get_participants_validation(event_id, club_id, schedule_type, expected_
                     "Klub": "Club Name",
                     "Kategoria": "Category Name",
                     "Mata": "Mat Name",
-                    "Szacowany czas": "10:00 - 10:30",
-                    "Dzień": "Day 1"
+                    "Dzień": "Day 1",
+                    "Czas": "10:00 - 10:30",
+                    "Start timestamp": 1762587000,
+                    "End timestamp": 1762595505
                 }
             ],
             "Day 2": [...]
