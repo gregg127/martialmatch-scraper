@@ -7,28 +7,61 @@ MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
 NEW_MINOR=$((MINOR + 1))
 VERSION="$MAJOR.$NEW_MINOR"
 
-IMAGE_NAME=harbor.golebiowski.dev/services/martialmatch-scraper
+REGISTRY_HOST=harbor.golebiowski.dev
+IMAGE_NAME=$REGISTRY_HOST/services/martialmatch-scraper
+
+# Detect OS and set appropriate platforms
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    PLATFORMS="linux/amd64,linux/arm64"
+    log "Detected macOS - building for multiple platforms: $PLATFORMS"
+else
+    PLATFORMS="linux/amd64"
+    log "Detected Linux - building for single platform: $PLATFORMS"
+fi
+
+_log() {
+  local output_stream=${2:-1}
+  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" >&$output_stream
+}
 
 log() {
-  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1"
+  _log "$1" 1
+}
+
+log_error() {
+  _log "Error: $1" 2
 }
 
 if ! docker info > /dev/null 2>&1; then
-    log "Error: Docker daemon is not running"
+    log_error "Docker daemon is not running"d
     exit 1
 fi
 
 log "Building Docker image with version $VERSION..."
-if ! docker build --platform linux/amd64,linux/arm64 --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$VERSION" -f Dockerfile .; then
-    log "Error: Docker build failed"
+if ! docker build --platform "$PLATFORMS" --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$VERSION" -f Dockerfile .; then
+    log_error "Docker build failed"
     exit 1
 fi
 
 log "Pushing Docker image to registry..."
-docker push "$IMAGE_NAME:$VERSION"
+
+log "Checking connectivity to registry host: $REGISTRY_HOST"
+if ping -c 1 -W 5 "$REGISTRY_HOST" > /dev/null 2>&1; then
+    if docker push "$IMAGE_NAME:$VERSION"; then
+        log "Docker image pushed successfully"
+    else
+        log_error "Failed to push Docker image to registry"
+    fi
+else
+    log_error "Cannot reach registry host $REGISTRY_HOST."
+fi
 
 log "Updating version in kustomization..."
-sed -i '' "s|$IMAGE_NAME:.*|$IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s|$IMAGE_NAME:.*|$IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
+else
+    sed -i "s|$IMAGE_NAME:.*|$IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
+fi
 
 log "Committing version to the repository..."
 git add kustomization/deployment.yaml
