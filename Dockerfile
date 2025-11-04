@@ -25,6 +25,7 @@ COPY ./app/static /app/static
 COPY ./app/templates /app/templates
 COPY ./app/main.py /app/
 COPY ./app/martialmatch_scraper.py /app/
+COPY ./app/utils.py /app/
 
 # Change ownership of the app directory to appuser
 RUN chown -R appuser:appuser /app
@@ -33,7 +34,7 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 # Expose the port
-EXPOSE 8000
+EXPOSE 80
 
 # Run the application with uvicorn
-CMD ["fastapi", "run", "main.py", "--port", "8000"]
+CMD ["fastapi", "run", "main.py", "--port", "80"]
