@@ -12,7 +12,7 @@ services:
       - PYTHONUNBUFFERED=1
     networks:
       - app-network
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -34,7 +34,7 @@ services:
       - app
     networks:
       - app-network
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
