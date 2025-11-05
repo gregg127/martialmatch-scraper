@@ -8,7 +8,7 @@ NEW_MINOR=$((MINOR + 1))
 VERSION="$MAJOR.$NEW_MINOR"
 
 REGISTRY_HOST=harbor.golebiowski.dev
-IMAGE_NAME=$REGISTRY_HOST/services/martialmatch-scraper
+APP_IMAGE_NAME=$REGISTRY_HOST/services/martialmatch-scraper
 
 # Detect OS and set appropriate platforms
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -27,14 +27,16 @@ log_error() {
   echo -e "\033[31m$(date +"%Y-%m-%d %H:%M:%S") - Error: $1\033[0m" >&2
 }
 
+log "Creating release and deploying new image version to docker registry - MartialmMatch Scraper v$VERSION"
+
 if ! docker info > /dev/null 2>&1; then
-    log_error "Docker daemon is not running"d
+    log_error "Docker daemon is not running"
     exit 1
 fi
 
-log "Building Docker image with version $VERSION..."
-if ! docker build --platform "$PLATFORMS" --build-arg VERSION="$VERSION" -t "$IMAGE_NAME:$VERSION" -f Dockerfile .; then
-    log_error "Docker build failed"
+log "Building application Docker image with version $VERSION..."
+if ! docker build --platform "$PLATFORMS" --build-arg VERSION="$VERSION" -t "$APP_IMAGE_NAME:$VERSION" -f ./app/Dockerfile .; then
+    log_error "Application Docker build failed"
     exit 1
 fi
 
@@ -42,10 +44,11 @@ log "Pushing Docker image to registry..."
 
 log "Checking connectivity to registry host: $REGISTRY_HOST"
 if ping -c 1 -W 5 "$REGISTRY_HOST" > /dev/null 2>&1; then
-    if docker push "$IMAGE_NAME:$VERSION"; then
-        log "Docker image pushed successfully"
+    log "Pushing application image..."
+    if docker push "$APP_IMAGE_NAME:$VERSION"; then
+        log "Application Docker image pushed successfully"
     else
-        log_error "Failed to push Docker image to registry"
+        log_error "Failed to push application Docker image to registry"
     fi
 else
     log_error "Cannot reach registry host $REGISTRY_HOST."
@@ -53,9 +56,9 @@ fi
 
 log "Updating version in kustomization..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "s|$IMAGE_NAME:.*|$IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
+    sed -i '' "s|$APP_IMAGE_NAME:.*|$APP_IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
 else
-    sed -i "s|$IMAGE_NAME:.*|$IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
+    sed -i "s|$APP_IMAGE_NAME:.*|$APP_IMAGE_NAME:$VERSION|" kustomization/deployment.yaml
 fi
 
 log "Committing version to the repository..."

@@ -17,10 +17,31 @@ Therefore, I created this simple app that:
 ## Developer Guide
 
 ### Prerequisites
+- Docker and Docker Compose (recommended)
 - Python 3.8+
 - pip package manager
 
-### Local Development Setup
+### Quick Start with Docker (Recommended)
+
+1. Clone the repository:
+```bash
+git clone https://github.com/gregg127/martialmatch-scraper
+cd martialmatch-scraper
+```
+
+2. Provide SSL certificates in `nginx/cert/` directory:
+   - `server.crt` - SSL certificate  
+   - `server.key` - Private key
+
+3. Start the application:
+```bash
+docker-compose up -d --build
+```
+
+The application will be available at:
+- HTTPS: `https://localhost` (requires SSL certificates in `nginx/cert/`)
+
+### Local Development Setup (without nginx)
 
 1. Clone the repository:
 ```bash
@@ -36,21 +57,21 @@ source venv/bin/activate
 
 3. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -r app/requirements.txt
 ```
 
 4. Run the development server:
 ```bash
-cd app
-fastapi dev main.py
+cd app/webapp
+fastapi dev main.py --port 8080
 ```
 
-The application will be available at `http://localhost:8000`
+The application will be available at `http://localhost:8080`
 
 ### Testing
 Run the test suite:
 ```bash
-cd app
+cd app/webapp
 python -m pytest tests/test_main.py -v
 ```
 
