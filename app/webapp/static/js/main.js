@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!scheduleItems || scheduleItems.length === 0) continue;
 
                     scheduleHtml += `
-                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">⮞</span></h3>
+                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">▶</span></h3>
                         <div class="collapsible-content" style="display: none;">
                             <table>
                                 <thead>
@@ -193,12 +193,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (this.classList.contains('collapsed')) {
                     // Expand
                     content.style.display = 'block';
-                    indicator.textContent = '⮟';
+                    indicator.textContent = '▼';
                     this.classList.remove('collapsed');
                 } else {
                     // Collapse
                     content.style.display = 'none';
-                    indicator.textContent = '⮞';
+                    indicator.textContent = '▶';
                     this.classList.add('collapsed');
                 }
             });
