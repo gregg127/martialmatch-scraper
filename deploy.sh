@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Get the latest version from git tags and increment minor version
 CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/v//' || echo "1.0")
@@ -27,7 +27,7 @@ log_error() {
   echo -e "\033[31m$(date +"%Y-%m-%d %H:%M:%S") - Error: $1\033[0m" >&2
 }
 
-log "Creating release and deploying new image version to docker registry - MartialmMatch Scraper v$VERSION"
+log "Creating release and deploying new image version to docker registry - MartialMatch Scraper v$VERSION"
 
 if ! docker info > /dev/null 2>&1; then
     log_error "Docker daemon is not running"
@@ -35,23 +35,25 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 log "Building application Docker image with version $VERSION..."
-if ! docker build --platform "$PLATFORMS" --build-arg VERSION="$VERSION" -t "$APP_IMAGE_NAME:$VERSION" -f ./app/Dockerfile .; then
+if ! docker build --platform "$PLATFORMS" --build-arg VERSION="$VERSION" --tag "$APP_IMAGE_NAME:$VERSION" -f app/Dockerfile .; then
     log_error "Application Docker build failed"
     exit 1
 fi
 
-log "Pushing Docker image to registry..."
+log "Pushing Docker image to remote registry..."
 
 log "Checking connectivity to registry host: $REGISTRY_HOST"
 if ping -c 1 -W 5 "$REGISTRY_HOST" > /dev/null 2>&1; then
     log "Pushing application image..."
-    if docker push "$APP_IMAGE_NAME:$VERSION"; then
+    if docker push "$APP_IMAGE_NAME:$VERSION" --platform linux/amd64; then
         log "Application Docker image pushed successfully"
     else
         log_error "Failed to push application Docker image to registry"
+        exit 1
     fi
 else
     log_error "Cannot reach registry host $REGISTRY_HOST."
+    exit 1
 fi
 
 log "Updating version in kustomization..."
