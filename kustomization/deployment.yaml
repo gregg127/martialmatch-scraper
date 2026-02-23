@@ -25,7 +25,7 @@ spec:
           image: harbor.golebiowski.dev/services/martialmatch-scraper:1.6
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
           resources:
             requests:
               memory: "128Mi"
