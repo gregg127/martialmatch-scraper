@@ -13,7 +13,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
+    && apt-get install -y --no-install-recommends build-essential curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -34,7 +34,7 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 # Expose the application port
-EXPOSE 8080
+EXPOSE 8000
 
-# Run the application with uvicorn on port 8080
-CMD ["fastapi", "run", "main.py", "--port", "8080", "--host", "0.0.0.0"]
+# Run the application with uvicorn on port 8000
+CMD ["fastapi", "run", "main.py", "--port", "8000", "--host", "0.0.0.0"]
