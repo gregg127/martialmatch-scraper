@@ -1,123 +1,135 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Constants
-    const MAX_ACTIVE_TOURNAMENTS = 10;
-    
-    // DOM Elements
-    const elements = {
-        form: document.getElementById('tournamentForm'),
-        loading: document.getElementById('loading'),
-        results: document.getElementById('results'),
-        error: document.getElementById('error'),
-        scheduleContainer: document.getElementById('scheduleContainer'),
-        tournamentSelect: document.getElementById('tournamentSelect'),
-        clubSelect: document.getElementById('clubSelect'),
-        tournamentTypeRadios: document.getElementsByName('tournamentType'),
-        scheduleTypeRadios: document.getElementsByName('scheduleType')
-    };
+document.addEventListener("DOMContentLoaded", function () {
+  // Constants
+  const MAX_ACTIVE_TOURNAMENTS = 10;
 
-    // Store tournament data
-    let tournamentData = { active: [], archived: [] };
-    let serverTimestamp = null; // Store server timestamp globally
+  // DOM Elements
+  const elements = {
+    form: document.getElementById("tournamentForm"),
+    loading: document.getElementById("loading"),
+    results: document.getElementById("results"),
+    error: document.getElementById("error"),
+    scheduleContainer: document.getElementById("scheduleContainer"),
+    tournamentSelect: document.getElementById("tournamentSelect"),
+    clubSelect: document.getElementById("clubSelect"),
+    tournamentTypeRadios: document.getElementsByName("tournamentType"),
+    scheduleTypeRadios: document.getElementsByName("scheduleType"),
+  };
 
-    // Initialize tournaments dropdown
-    async function initializeTournaments() {
-        elements.tournamentSelect.disabled = true;
-        elements.tournamentSelect.innerHTML = '<option value="">Pobieram...</option>';
+  // Store tournament data
+  let tournamentData = { active: [], archived: [] };
+  let serverTimestamp = null; // Store server timestamp globally
 
-        try {
-            const response = await fetch('/api/tournaments');
-            const data = await response.json();
+  // Initialize tournaments dropdown
+  async function initializeTournaments() {
+    elements.tournamentSelect.disabled = true;
+    elements.tournamentSelect.innerHTML =
+      '<option value="">Pobieram...</option>';
 
-            if (!response.ok) {
-                throw new Error(data.detail || 'Failed to fetch tournaments');
-            }
+    try {
+      const response = await fetch("/api/tournaments");
+      const data = await response.json();
 
-            tournamentData = data.tournaments;
-            updateTournamentList(false); // Show active tournaments by default
-            
-            // Add radio buttons event listeners
-            elements.tournamentTypeRadios.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    updateTournamentList(e.target.value === 'archived');
-                });
-            });
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to fetch tournaments");
+      }
 
-        } catch (err) {
-            elements.tournamentSelect.innerHTML = '<option value="">Błąd podczas ładowania</option>';
-            console.error('Error fetching tournaments:', err);
-        } finally {
-            elements.tournamentSelect.disabled = false;
-        }
+      tournamentData = data.tournaments;
+      updateTournamentList(false); // Show active tournaments by default
+
+      // Add radio buttons event listeners
+      elements.tournamentTypeRadios.forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+          updateTournamentList(e.target.value === "archived");
+        });
+      });
+    } catch (err) {
+      elements.tournamentSelect.innerHTML =
+        '<option value="">Błąd podczas ładowania</option>';
+      console.error("Error fetching tournaments:", err);
+    } finally {
+      elements.tournamentSelect.disabled = false;
     }
+  }
 
-    function updateTournamentList(showArchived) {
-        let tournaments = showArchived ? tournamentData.archived : tournamentData.active;
-        if (!showArchived) {
-            tournaments = tournaments.slice(0, MAX_ACTIVE_TOURNAMENTS);
-        }
-        elements.tournamentSelect.innerHTML = tournaments.length 
-            ? tournaments.map(tournament => 
-                `<option value="${tournament.id}">${tournament.name}</option>`
-              ).join('')
-            : '<option value="">Brak turniejów</option>';
+  function updateTournamentList(showArchived) {
+    let tournaments = showArchived
+      ? tournamentData.archived
+      : tournamentData.active;
+    if (!showArchived) {
+      tournaments = tournaments.slice(0, MAX_ACTIVE_TOURNAMENTS);
     }
+    elements.tournamentSelect.innerHTML = tournaments.length
+      ? tournaments
+          .map(
+            (tournament) =>
+              `<option value="${tournament.id}">${tournament.name}</option>`,
+          )
+          .join("")
+      : '<option value="">Brak turniejów</option>';
+  }
 
-    // Initialize clubs dropdown
-    async function initializeClubs() {
-        elements.clubSelect.disabled = true;
-        elements.clubSelect.innerHTML = '<option value="">Pobieram...</option>';
+  // Initialize clubs dropdown
+  async function initializeClubs() {
+    elements.clubSelect.disabled = true;
+    elements.clubSelect.innerHTML = '<option value="">Pobieram...</option>';
 
-        try {
-            const response = await fetch('/api/clubs');
-            const data = await response.json();
+    try {
+      const response = await fetch("/api/clubs");
+      const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.detail || 'Failed to fetch clubs');
-            }
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to fetch clubs");
+      }
 
-            elements.clubSelect.innerHTML = data.clubs.map(club => 
-                `<option value="${club.id}">${club.display_name}</option>`
-            ).join('');
-
-        } catch (err) {
-            elements.clubSelect.innerHTML = '<option value="">Błąd podczas ładowania</option>';
-            console.error('Error fetching clubs:', err);
-        } finally {
-            elements.clubSelect.disabled = false;
-        }
+      elements.clubSelect.innerHTML = data.clubs
+        .map(
+          (club) => `<option value="${club.id}">${club.display_name}</option>`,
+        )
+        .join("");
+    } catch (err) {
+      elements.clubSelect.innerHTML =
+        '<option value="">Błąd podczas ładowania</option>';
+      console.error("Error fetching clubs:", err);
+    } finally {
+      elements.clubSelect.disabled = false;
     }
+  }
 
-    // Form submit handler
-    async function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        elements.loading.style.display = 'block';
-        elements.results.style.display = 'none';
-        elements.error.style.display = 'none';
+  // Form submit handler
+  async function handleFormSubmit(e) {
+    e.preventDefault();
 
-        try {
-            const eventId = elements.tournamentSelect.value;
-            const clubId = elements.clubSelect.value;
-            const scheduleType = Array.from(elements.scheduleTypeRadios).find(radio => radio.checked)?.value || 'planned';
-            
-            const response = await fetch(`/api/participants?event_id=${eventId}&club_id=${clubId}&schedule_type=${scheduleType}`);
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.detail || 'An error occurred');
-            }
+    elements.loading.style.display = "block";
+    elements.results.style.display = "none";
+    elements.error.style.display = "none";
 
-            // Display schedule
-            let scheduleHtml = '';
+    try {
+      const eventId = elements.tournamentSelect.value;
+      const clubId = elements.clubSelect.value;
+      const scheduleType =
+        Array.from(elements.scheduleTypeRadios).find((radio) => radio.checked)
+          ?.value || "planned";
 
-            if (Object.keys(data.schedule).length === 0) {
-                const errorMessage = data.message || 'Nie znaleziono danych.';
-                scheduleHtml = `<div class="error">${escapeHtml(errorMessage)}</div>`;
-            } else {
-                for (const [day, scheduleItems] of Object.entries(data.schedule)) {
-                    if (!scheduleItems || scheduleItems.length === 0) continue;
+      const response = await fetch(
+        `/api/participants?event_id=${eventId}&club_id=${clubId}&schedule_type=${scheduleType}`,
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "An error occurred");
+      }
 
-                    scheduleHtml += `
-                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">▶</span></h3>
+      // Display schedule
+      let scheduleHtml = "";
+
+      if (Object.keys(data.schedule).length === 0) {
+        const errorMessage = data.message || "Nie znaleziono danych.";
+        scheduleHtml = `<div class="error">${escapeHtml(errorMessage)}</div>`;
+      } else {
+        for (const [day, scheduleItems] of Object.entries(data.schedule)) {
+          if (!scheduleItems || scheduleItems.length === 0) continue;
+
+          scheduleHtml += `
+                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">&#10148;</span></h3>
                         <div class="collapsible-content" style="display: none;">
                             <table>
                                 <thead>
@@ -129,103 +141,105 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${scheduleItems.map(item => {
-                                        const timeStr = item["Czas"] || '';
-                                        const endTimestamp = item["End timestamp"];
-                                        
+                                    ${scheduleItems
+                                      .map((item) => {
+                                        const timeStr = item["Czas"] || "";
+                                        const endTimestamp =
+                                          item["End timestamp"];
+
                                         // Determine row color based on server time (only if serverTimestamp is available)
-                                        let rowClass = '';
+                                        let rowClass = "";
                                         if (serverTimestamp && endTimestamp) {
-                                            if (serverTimestamp > endTimestamp) {
-                                                rowClass = 'time-past';
-                                            }
+                                          if (serverTimestamp > endTimestamp) {
+                                            rowClass = "time-past";
+                                          }
                                         }
-                                        
+
                                         return `
                                             <tr class="${rowClass}">
-                                                <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || '-')}</td>
-                                                <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || '-')}</td>
-                                                <td data-column="mat">${escapeHtml(item.Mata || '-')}</td>
-                                                <td data-column="time">${escapeHtml(timeStr || '-')}</td>
+                                                <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || "-")}</td>
+                                                <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || "-")}</td>
+                                                <td data-column="mat">${escapeHtml(item.Mata || "-")}</td>
+                                                <td data-column="time">${escapeHtml(timeStr || "-")}</td>
                                             </tr>
                                         `;
-                                    }).join('')}
+                                      })
+                                      .join("")}
                                 </tbody>
                             </table>
                         </div>
                     `;
-                }
-            }
-            elements.scheduleContainer.innerHTML = scheduleHtml;
-            
-            // Add collapsible functionality
-            addCollapsibleBehavior();
-            
-            elements.results.style.display = 'block';
-            elements.loading.style.display = 'none';
-
-        } catch (err) {
-            elements.error.textContent = err.message;
-            elements.error.style.display = 'block';
-            elements.loading.style.display = 'none';
         }
+      }
+      elements.scheduleContainer.innerHTML = scheduleHtml;
+
+      // Add collapsible functionality
+      addCollapsibleBehavior();
+
+      elements.results.style.display = "block";
+      elements.loading.style.display = "none";
+    } catch (err) {
+      elements.error.textContent = err.message;
+      elements.error.style.display = "block";
+      elements.loading.style.display = "none";
     }
+  }
 
-    function escapeHtml(unsafe) {
-        if (unsafe === null || unsafe === undefined) return '-';
-        return unsafe
-            .toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+  function escapeHtml(unsafe) {
+    if (unsafe === null || unsafe === undefined) return "-";
+    return unsafe
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-    function addCollapsibleBehavior() {
-        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
-        
-        collapsibleHeaders.forEach(header => {
-            header.addEventListener('click', function() {
-                const content = this.nextElementSibling;
-                const indicator = this.querySelector('.collapse-indicator');
-                
-                if (this.classList.contains('collapsed')) {
-                    // Expand
-                    content.style.display = 'block';
-                    indicator.textContent = '▼';
-                    this.classList.remove('collapsed');
-                } else {
-                    // Collapse
-                    content.style.display = 'none';
-                    indicator.textContent = '▶';
-                    this.classList.add('collapsed');
-                }
-            });
-        });
-    }
+  function addCollapsibleBehavior() {
+    const collapsibleHeaders = document.querySelectorAll(".collapsible-header");
 
-    // Fetch server timestamp for time-based row coloring
-    async function initializeServerTime() {
-        try {
-            const response = await fetch('/api/server-time');
-            const data = await response.json();
+    collapsibleHeaders.forEach((header) => {
+      header.addEventListener("click", function () {
+        const content = this.nextElementSibling;
+        const indicator = this.querySelector(".collapse-indicator");
 
-            if (response.ok) {
-                // Store server timestamp directly from response
-                serverTimestamp = data.timestamp;
-            }
-        } catch (err) {
-            console.error('Error fetching server time:', err);
-            serverTimestamp = null; // Ensure it's null on error
+        if (this.classList.contains("collapsed")) {
+          // Expand
+          content.style.display = "block";
+          this.classList.remove("collapsed");
+          this.classList.add("expanded");
+        } else {
+          // Collapse
+          content.style.display = "none";
+          this.classList.add("collapsed");
+          this.classList.remove("expanded");
         }
+      });
+    });
+  }
+
+  // Fetch server timestamp for time-based row coloring
+  async function initializeServerTime() {
+    try {
+      const response = await fetch("/api/server-time");
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store server timestamp directly from response
+        serverTimestamp = data.timestamp;
+      }
+    } catch (err) {
+      console.error("Error fetching server time:", err);
+      serverTimestamp = null; // Ensure it's null on error
     }
+  }
 
-    // Initialize tournaments and clubs on page load
-    initializeTournaments();
-    initializeClubs();
-    initializeServerTime();
+  // Initialize tournaments and clubs on page load
+  initializeTournaments();
+  initializeClubs();
+  initializeServerTime();
 
-    // Event listeners
-    elements.form.addEventListener('submit', handleFormSubmit);
+  // Event listeners
+  elements.form.addEventListener("submit", handleFormSubmit);
 });

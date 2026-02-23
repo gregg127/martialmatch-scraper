@@ -218,6 +218,10 @@ button {
 }
 
 .collapsible-header.collapsed .collapse-indicator {
+    transform: rotate(90deg);
+}
+
+.collapsible-header.expanded .collapse-indicator {
     transform: rotate(-90deg);
 }
 
