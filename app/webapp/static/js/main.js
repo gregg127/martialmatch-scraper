@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (!scheduleItems || scheduleItems.length === 0) continue;
 
           scheduleHtml += `
-                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">&#10148;</span></h3>
+                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">&#8645;</span></h3>
                         <div class="collapsible-content" style="display: none;">
                             <table>
                                 <thead>

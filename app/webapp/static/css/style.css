@@ -218,11 +218,11 @@ button {
 }
 
 .collapsible-header.collapsed .collapse-indicator {
-    transform: rotate(90deg);
+    transform: rotate(180deg);
 }
 
 .collapsible-header.expanded .collapse-indicator {
-    transform: rotate(-90deg);
+    transform: rotate(0deg);
 }
 
 .collapsible-content {
