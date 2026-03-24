@@ -23,7 +23,8 @@ def make_api_request(url, cookies=None):
         response = requests.get(
             url,
             headers={
-                "Cookie": "; ".join(f"{k}={v}" for k, v in (cookies or {}).items())
+                "Cookie": "; ".join(f"{k}={v}" for k, v in (cookies or {}).items()),
+                "Accept-encoding": "gzip, deflate",
             },
         )
         if response.status_code == 404:
