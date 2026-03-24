@@ -64,10 +64,8 @@ async def get_participants(
 ) -> Dict[str, Any]:
     try:
         params = ParticipantRequest(event_id=event_id, club_id=club_id, schedule_type=schedule_type)
-        
         schedule_per_day = get_participants_schedule(params.event_id, params.club_id, params.schedule_type)
         return {"schedule": schedule_per_day}
-
     except PydanticValidationError as e:
         error_msg = e.errors()[0]['msg'] if e.errors() else "Validation error"
         raise HTTPException(status_code=400, detail=error_msg)
