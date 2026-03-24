@@ -244,15 +244,20 @@ def get_participants_schedule(event_id, club_id, schedule_type):
 def merge_participants_with_schedule(participants, schedule):
     """Merge participants data with schedule data and group by day."""
     schedule_per_day = {}
-    
-    for day in schedule['Dzień'].unique():
-        day_schedule = schedule[schedule['Dzień'] == day]
-        merged = pd.merge(participants, day_schedule, on="Kategoria", how="inner")
-        
-        if not merged.empty:
-            merged = merged.copy()
-            merged['start_time'] = merged['Czas'].str.extract(r'(\d{2}:\d{2}) -')
-            merged = (merged.sort_values(['start_time', 'Imię i nazwisko']).drop('start_time', axis=1))
-            schedule_per_day[day] = merged.to_dict(orient='records')
-    
+
+    # Precompute extracted start times for sorting
+    schedule = schedule.copy()
+    schedule['start_time'] = schedule['Czas'].str.extract(r'(\d{2}:\d{2}) -')
+
+    merged = pd.merge(participants, schedule, on="Kategoria", how="inner")
+    if merged.empty:
+        return schedule_per_day
+
+    # Sort once, then group
+    merged = merged.sort_values(['Dzień', 'start_time', 'Imię i nazwisko'])
+    merged = merged.drop('start_time', axis=1)
+
+    for day, group in merged.groupby('Dzień'):
+        schedule_per_day[day] = group.to_dict(orient='records')
+
     return schedule_per_day
