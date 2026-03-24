@@ -76,15 +76,18 @@ tournaments_cache = TTLCache(maxsize=CACHE_SIZE, ttl=TOURNAMENTS_CACHE_TTL)
 
 
 def cache_with_ttl(cache):
-    """Time-based cache decorator."""
+    """Time-based cache decorator with logging for HIT/MISS."""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             key = str(args) + str(kwargs)
             result = cache.get(key)
-            if result is None:
-                result = func(*args, **kwargs)
-                cache[key] = result
+            if result is not None:
+                logging.info(f"[CACHE HIT] {func.__name__} key={key}")
+                return result
+            logging.info(f"[CACHE MISS] {func.__name__} key={key}")
+            result = func(*args, **kwargs)
+            cache[key] = result
             return result
         return wrapper
     return decorator
