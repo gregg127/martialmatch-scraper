@@ -15,9 +15,10 @@ VALID_CLUB_ID = list(ALLOWED_CLUBS.keys())[0]
 # API Endpoint Tests
 # =============================================================================
 
+
 def test_get_clubs():
     """Test the /api/clubs endpoint
-    
+
     Expected JSON response structure:
     {
         "clubs": [
@@ -26,7 +27,7 @@ def test_get_clubs():
                 "display_name": "Test Club Name 1"
             },
             {
-                "id": "test_club_id_2", 
+                "id": "test_club_id_2",
                 "display_name": "Test Club Name 2"
             }
         ]
@@ -37,7 +38,7 @@ def test_get_clubs():
     data = response.json()
     assert "clubs" in data
     assert len(data["clubs"]) == len(ALLOWED_CLUBS)
-    
+
     # Verify each club has the expected structure and data types
     for club in data["clubs"]:
         assert "id" in club
@@ -46,9 +47,10 @@ def test_get_clubs():
         assert isinstance(club["display_name"], str)
         assert club["id"] in ALLOWED_CLUBS  # Verify ID exists in allowed clubs
 
+
 def test_get_tournaments():
     """Test the /api/tournaments endpoint
-    
+
     Expected JSON response structure:
     {
         "tournaments": {
@@ -61,7 +63,7 @@ def test_get_tournaments():
             ],
             "archived": [
                 {
-                    "id": "456-old-tournament-name", 
+                    "id": "456-old-tournament-name",
                     "name": "Old Tournament Name"
                 },
                 ...
@@ -76,7 +78,7 @@ def test_get_tournaments():
     assert isinstance(data["tournaments"], dict)
     assert "active" in data["tournaments"]
     assert "archived" in data["tournaments"]
-    
+
     # Verify structure of tournament lists
     for category in ["active", "archived"]:
         assert isinstance(data["tournaments"][category], list)
@@ -92,28 +94,36 @@ def test_get_tournaments():
 # API Validation Tests
 # =============================================================================
 
-@pytest.mark.parametrize("event_id,club_id,schedule_type,expected_status,test_case", [
-    # Valid requests
-    ("123", VALID_CLUB_ID, "planned", 200, "valid_request_nonexistent_event"),
-    
-    # Invalid club validation
-    ("123", "invalid_club", "planned", 400, "invalid_club_id"),
-    
-    # Empty parameter validation
-    ("", VALID_CLUB_ID, "planned", 400, "empty_event_id"),
-    ("123", "", "planned", 400, "empty_club_id"),
-    ("123", VALID_CLUB_ID, "", 400, "empty_schedule_type"),
-    
-    # Field length validation
-    ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID, "planned", 400, "event_id_too_long"),
-    ("123", "x" * (MAX_FIELD_LENGTH + 1), "planned", 400, "club_id_too_long"),
-    
-    # Invalid enum values
-    ("123", VALID_CLUB_ID, "invalid", 400, "invalid_schedule_type"),
-])
-def test_get_participants_validation(event_id, club_id, schedule_type, expected_status, test_case):
+
+@pytest.mark.parametrize(
+    "event_id,club_id,schedule_type,expected_status,test_case",
+    [
+        # Valid requests
+        ("123", VALID_CLUB_ID, "planned", 200, "valid_request_nonexistent_event"),
+        # Invalid club validation
+        ("123", "invalid_club", "planned", 400, "invalid_club_id"),
+        # Empty parameter validation
+        ("", VALID_CLUB_ID, "planned", 400, "empty_event_id"),
+        ("123", "", "planned", 400, "empty_club_id"),
+        ("123", VALID_CLUB_ID, "", 400, "empty_schedule_type"),
+        # Field length validation
+        (
+            "x" * (MAX_FIELD_LENGTH + 1),
+            VALID_CLUB_ID,
+            "planned",
+            400,
+            "event_id_too_long",
+        ),
+        ("123", "x" * (MAX_FIELD_LENGTH + 1), "planned", 400, "club_id_too_long"),
+        # Invalid enum values
+        ("123", VALID_CLUB_ID, "invalid", 400, "invalid_schedule_type"),
+    ],
+)
+def test_get_participants_validation(
+    event_id, club_id, schedule_type, expected_status, test_case
+):
     """Test validation for /api/participants endpoint
-    
+
     Expected JSON response structure for successful requests:
     {
         "schedule": {
@@ -132,17 +142,24 @@ def test_get_participants_validation(event_id, club_id, schedule_type, expected_
             "Day 2": [...]
         }
     }
-    
+
     For empty results or no participants: {"schedule": {}}
     """
     response = client.get(
-        f"/api/participants", 
-        params={"event_id": event_id, "club_id": club_id, "schedule_type": schedule_type}
+        f"/api/participants",
+        params={
+            "event_id": event_id,
+            "club_id": club_id,
+            "schedule_type": schedule_type,
+        },
     )
     assert response.status_code == expected_status, f"Test case '{test_case}' failed"
-    
+
     # For 200 responses with no data, verify the response structure
-    if expected_status == 200 and test_case in ["valid_request_nonexistent_event", "valid_request_real_schedule"]:
+    if expected_status == 200 and test_case in [
+        "valid_request_nonexistent_event",
+        "valid_request_real_schedule",
+    ]:
         data = response.json()
         assert "schedule" in data
         assert "message" in data

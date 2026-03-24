@@ -1,14 +1,14 @@
-from bs4 import BeautifulSoup
-import pandas as pd
-from datetime import datetime
-import re
-from cachetools import TTLCache
-from functools import wraps
-import pytz
 import logging
+import re
 import time
+from datetime import datetime
+from functools import wraps
 
-from utils import extract_numeric_id, make_api_request, EventNotFoundHTTPError
+import pandas as pd
+import pytz
+from bs4 import BeautifulSoup
+from cachetools import TTLCache
+from utils import EventNotFoundHTTPError, extract_numeric_id, make_api_request
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,54 +20,51 @@ EVENT_NOT_FOUND_MESSAGE = "Nie znaleziono turnieju"
 
 class ScheduleNotFoundError(Exception):
     """Raised when no schedule data is available for the requested event."""
+
     def __init__(self, message=NO_SCHEDULE_MESSAGE):
         super().__init__(message)
 
 
 class ParticipantsNotFoundError(Exception):
     """Raised when no participants are found for the requested club and event."""
+
     def __init__(self, message=NO_PARTICIPANTS_MESSAGE):
         super().__init__(message)
 
 
 class EventNotFoundError(Exception):
     """Raised when the requested event does not exist (404 error)."""
+
     def __init__(self, message=EVENT_NOT_FOUND_MESSAGE):
         super().__init__(message)
 
 
 BASE_URL = "https://martialmatch.com"
-PARTICIPANTS_CACHE_TTL = 1800   # Cache time in seconds (30 minutes)
-SCHEDULE_CACHE_TTL = 600        # Cache time in seconds (10 minutes)
-TOURNAMENTS_CACHE_TTL = 3600    # Cache time in seconds (60 minutes)
-CACHE_SIZE = 50                 # Maximum number of items in cache
-TIMEZONE = pytz.timezone('Europe/Warsaw')
+PARTICIPANTS_CACHE_TTL = 1800  # Cache time in seconds (30 minutes)
+SCHEDULE_CACHE_TTL = 600  # Cache time in seconds (10 minutes)
+TOURNAMENTS_CACHE_TTL = 3600  # Cache time in seconds (60 minutes)
+CACHE_SIZE = 50  # Maximum number of items in cache
+TIMEZONE = pytz.timezone("Europe/Warsaw")
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 ALLOWED_CLUBS = {
     "academia_gorila_warszawa": {
         "name": "Academia Gorila / Warszawa",
-        "display_name": "Academia Gorila (Warszawa)"
+        "display_name": "Academia Gorila (Warszawa)",
     },
     "academia_gorila_ruda_slaska": {
         "name": "Academia Gorila / Ruda Śląska",
-        "display_name": "Academia Gorila (Ruda Śląska)"
+        "display_name": "Academia Gorila (Ruda Śląska)",
     },
     "academia_gorila_bielsko_biala": {
         "name": "Academia Gorila / Bielsko Biała",
-        "display_name": "Academia Gorila (Bielsko Biała)"
+        "display_name": "Academia Gorila (Bielsko Biała)",
     },
 }
 
 ALLOWED_SCHEDULE_TYPES = {
-    'planned': {
-        'name': 'planned',
-        'description': 'Scheduled time'
-    },
-    'real': {
-        'name': 'real', 
-        'description': 'Real-time schedule'
-    }
+    "planned": {"name": "planned", "description": "Scheduled time"},
+    "real": {"name": "real", "description": "Real-time schedule"},
 }
 
 participants_cache = TTLCache(maxsize=CACHE_SIZE, ttl=PARTICIPANTS_CACHE_TTL)
@@ -77,6 +74,7 @@ tournaments_cache = TTLCache(maxsize=CACHE_SIZE, ttl=TOURNAMENTS_CACHE_TTL)
 
 def cache_with_ttl(cache):
     """Time-based cache decorator with logging for HIT/MISS."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -89,7 +87,9 @@ def cache_with_ttl(cache):
             result = func(*args, **kwargs)
             cache[key] = result
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -119,7 +119,9 @@ def fetch_bjj_participants(event_id, club_id):
         try:
             category_section = categories[i]
             table_section = categories[i + 1] if i + 1 < len(categories) else None
-            category_name = category_section.find("h4", class_="title is-4 is-marginless").text.strip()
+            category_name = category_section.find(
+                "h4", class_="title is-4 is-marginless"
+            ).text.strip()
             if not table_section or not table_section.find("table"):
                 continue  # Skip categories without participants instead of raising error
             for row in table_section.find("tbody").find_all("tr"):
@@ -130,9 +132,13 @@ def fetch_bjj_participants(event_id, club_id):
                 participant_data.append((name, club, category_name))
         except (AttributeError, IndexError) as e:
             continue  # Skip malformed data instead of failing
-    df = pd.DataFrame(participant_data, columns=["Imię i nazwisko", "Klub", "Kategoria"])
+    df = pd.DataFrame(
+        participant_data, columns=["Imię i nazwisko", "Klub", "Kategoria"]
+    )
     filtered_df = df[df["Klub"] == ALLOWED_CLUBS[club_id]["name"]]
-    logging.info(f"[PROFILE] fetch_bjj_participants data parsing took {time.time() - start_time_prof:.4f} seconds")
+    logging.info(
+        f"[PROFILE] fetch_bjj_participants data parsing took {time.time() - start_time_prof:.4f} seconds"
+    )
     return filtered_df
 
 
@@ -147,12 +153,15 @@ def fetch_bjj_schedule(event_id, schedule_type):
     """
     numeric_id = extract_numeric_id(event_id)
     url = f"{BASE_URL}/api/events/{numeric_id}/schedules"
-    cookies = {'PANEL_LANGUAGE_V3': 'pl', 'PANEL_TIMEZONE': 'Europe/Warsaw'}
+    cookies = {"PANEL_LANGUAGE_V3": "pl", "PANEL_TIMEZONE": "Europe/Warsaw"}
     json_data = make_api_request(url, cookies).json()
     start_time_prof = time.time()
     schedule_data = []
     for day in json_data.get("schedules", []):
-        if schedule_type == ALLOWED_SCHEDULE_TYPES['real']['name'] and day.get("sharing") != 3:
+        if (
+            schedule_type == ALLOWED_SCHEDULE_TYPES["real"]["name"]
+            and day.get("sharing") != 3
+        ):
             # Skip days that are not part of the real-time schedule
             continue
         for mat in day.get("mats", []):
@@ -162,25 +171,41 @@ def fetch_bjj_schedule(event_id, schedule_type):
                     start_time = datetime.strptime(times["start"], DATE_FORMAT)
                     end_time = datetime.strptime(times["end"], DATE_FORMAT)
                     # Convert to Polish timezone
-                    start_time_tz = start_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
+                    start_time_tz = start_time.replace(tzinfo=pytz.UTC).astimezone(
+                        TIMEZONE
+                    )
                     end_time_tz = end_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
-                    start = start_time_tz.strftime('%H:%M')
-                    end = end_time_tz.strftime('%H:%M')
+                    start = start_time_tz.strftime("%H:%M")
+                    end = end_time_tz.strftime("%H:%M")
                     # Get timestamps
                     start_timestamp = int(start_time_tz.timestamp())
                     end_timestamp = int(end_time_tz.timestamp())
-                    schedule_data.append([
-                        category["name"],
-                        mat["name"],
-                        day["name"],
-                        f"{start} - {end}",
-                        start_timestamp,
-                        end_timestamp
-                    ])
+                    schedule_data.append(
+                        [
+                            category["name"],
+                            mat["name"],
+                            day["name"],
+                            f"{start} - {end}",
+                            start_timestamp,
+                            end_timestamp,
+                        ]
+                    )
                 except (KeyError, ValueError):
                     continue  # Skip invalid time data
-    df = pd.DataFrame(schedule_data, columns=["Kategoria", "Mata", "Dzień", "Czas", "Start timestamp", "End timestamp"])
-    logging.info(f"[PROFILE] fetch_bjj_schedule data parsing took {time.time() - start_time_prof:.4f} seconds")
+    df = pd.DataFrame(
+        schedule_data,
+        columns=[
+            "Kategoria",
+            "Mata",
+            "Dzień",
+            "Czas",
+            "Start timestamp",
+            "End timestamp",
+        ],
+    )
+    logging.info(
+        f"[PROFILE] fetch_bjj_schedule data parsing took {time.time() - start_time_prof:.4f} seconds"
+    )
     return df
 
 
@@ -188,7 +213,7 @@ def fetch_all_tournament_ids():
     """Fetch tournament IDs from both active and archive pages."""
     return {
         "active": fetch_tournament_ids(f"{BASE_URL}/pl/events"),
-        "archived": fetch_tournament_ids(f"{BASE_URL}/pl/events/archive")
+        "archived": fetch_tournament_ids(f"{BASE_URL}/pl/events/archive"),
     }
 
 
@@ -201,9 +226,9 @@ def fetch_tournament_ids(url):
     soup = BeautifulSoup(make_api_request(url).text, "html.parser")
     tournament_ids = []
     seen_ids = set()
-    for link in soup.find_all('a', href=re.compile(r'^/pl/events/\d+.*')):
-        href = link.get('href')
-        id_match = re.search(r'/pl/events/(\d+.*?)(?:/|$)', href)
+    for link in soup.find_all("a", href=re.compile(r"^/pl/events/\d+.*")):
+        href = link.get("href")
+        id_match = re.search(r"/pl/events/(\d+.*?)(?:/|$)", href)
         if id_match and id_match.group(1) not in seen_ids:
             name = link.text.strip()
             if name:
@@ -237,14 +262,18 @@ def merge_participants_with_schedule(participants, schedule):
     schedule_per_day = {}
     start_time_prof = time.time()
     schedule = schedule.copy()
-    schedule['start_time'] = schedule['Czas'].str.extract(r'(\d{2}:\d{2}) -')
+    schedule["start_time"] = schedule["Czas"].str.extract(r"(\d{2}:\d{2}) -")
     merged = pd.merge(participants, schedule, on="Kategoria", how="inner")
     if merged.empty:
-        logging.info(f"[PROFILE] merge_participants_with_schedule with empty merge took {time.time() - start_time_prof:.4f} seconds")
+        logging.info(
+            f"[PROFILE] merge_participants_with_schedule with empty merge took {time.time() - start_time_prof:.4f} seconds"
+        )
         return schedule_per_day
-    merged = merged.sort_values(['Dzień', 'start_time', 'Imię i nazwisko'])
-    merged = merged.drop('start_time', axis=1)
-    for day, group in merged.groupby('Dzień'):
-        schedule_per_day[day] = group.to_dict(orient='records')
-    logging.info(f"[PROFILE] merge_participants_with_schedule took {time.time() - start_time_prof:.4f} seconds")
+    merged = merged.sort_values(["Dzień", "start_time", "Imię i nazwisko"])
+    merged = merged.drop("start_time", axis=1)
+    for day, group in merged.groupby("Dzień"):
+        schedule_per_day[day] = group.to_dict(orient="records")
+    logging.info(
+        f"[PROFILE] merge_participants_with_schedule took {time.time() - start_time_prof:.4f} seconds"
+    )
     return schedule_per_day
