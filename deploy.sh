@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+log() {
+  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1"
+}
+
+log_error() {
+  echo -e "\033[31m$(date +"%Y-%m-%d %H:%M:%S") - Error: $1\033[0m" >&2
+}
+
 # Get the latest version from git tags and increment minor version
 CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/v//' || echo "1.0")
 MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
@@ -18,14 +26,6 @@ else
     PLATFORMS="linux/amd64"
     log "Detected Linux - building for single platform: $PLATFORMS"
 fi
-
-log() {
-  echo "$(date +"%Y-%m-%d %H:%M:%S") - $1"
-}
-
-log_error() {
-  echo -e "\033[31m$(date +"%Y-%m-%d %H:%M:%S") - Error: $1\033[0m" >&2
-}
 
 log "Creating release and deploying new image version to docker registry - MartialMatch Scraper v$VERSION"
 
