@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Constants
   const MAX_ACTIVE_TOURNAMENTS = 10;
 
-  // DOM Elements
   const elements = {
     form: document.getElementById("tournamentForm"),
     loading: document.getElementById("loading"),
@@ -14,15 +12,53 @@ document.addEventListener("DOMContentLoaded", function () {
     tournamentTypeRadios: document.getElementsByName("tournamentType"),
   };
 
-  // Store tournament data
   let tournamentData = { active: [], archived: [] };
-  let serverTimestamp = null; // Store server timestamp globally
+  let serverTimestamp = null;
 
-  // Initialize tournaments dropdown
+  function escapeHtml(unsafe) {
+    if (unsafe === null || unsafe === undefined) return "-";
+    return unsafe
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function buildRowHtml(item) {
+    const isPast =
+      serverTimestamp && item.end_timestamp && serverTimestamp > item.end_timestamp;
+    return `
+      <tr class="${isPast ? "time-past" : ""}">
+        <td data-column="name">${escapeHtml(item.name)}</td>
+        <td data-column="category" class="category-cell">${escapeHtml(item.category)}</td>
+        <td data-column="mat">${escapeHtml(item.mat)}</td>
+        <td data-column="time">${escapeHtml(item.time)}</td>
+      </tr>`;
+  }
+
+  function buildDayHtml(day, items) {
+    return `
+      <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">&#8645;</span></h3>
+      <div class="collapsible-content" style="display: none;">
+        <table>
+          <thead>
+            <tr>
+              <th data-column="name">Imię i nazwisko</th>
+              <th data-column="category" class="category-header">Kategoria</th>
+              <th data-column="mat">Mata</th>
+              <th data-column="time">Czas</th>
+            </tr>
+          </thead>
+          <tbody>${items.map(buildRowHtml).join("")}</tbody>
+        </table>
+      </div>`;
+  }
+
   async function initializeTournaments() {
     elements.tournamentSelect.disabled = true;
-    elements.tournamentSelect.innerHTML =
-      '<option value="">Pobieram...</option>';
+    elements.tournamentSelect.innerHTML = '<option value="">Pobieram...</option>';
 
     try {
       const response = await fetch("/api/tournaments");
@@ -33,9 +69,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       tournamentData = data.tournaments;
-      updateTournamentList(false); // Show active tournaments by default
+      updateTournamentList(false);
 
-      // Add radio buttons event listeners
       elements.tournamentTypeRadios.forEach((radio) => {
         radio.addEventListener("change", (e) => {
           updateTournamentList(e.target.value === "archived");
@@ -51,23 +86,16 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateTournamentList(showArchived) {
-    let tournaments = showArchived
+    const tournaments = showArchived
       ? tournamentData.archived
-      : tournamentData.active;
-    if (!showArchived) {
-      tournaments = tournaments.slice(0, MAX_ACTIVE_TOURNAMENTS);
-    }
+      : tournamentData.active.slice(0, MAX_ACTIVE_TOURNAMENTS);
     elements.tournamentSelect.innerHTML = tournaments.length
       ? tournaments
-          .map(
-            (tournament) =>
-              `<option value="${tournament.id}">${tournament.name}</option>`,
-          )
+          .map((t) => `<option value="${t.id}">${t.name}</option>`)
           .join("")
       : '<option value="">Brak turniejów</option>';
   }
 
-  // Initialize clubs dropdown
   async function initializeClubs() {
     elements.clubSelect.disabled = true;
     elements.clubSelect.innerHTML = '<option value="">Pobieram...</option>';
@@ -81,9 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       elements.clubSelect.innerHTML = data.clubs
-        .map(
-          (club) => `<option value="${club.id}">${club.display_name}</option>`,
-        )
+        .map((club) => `<option value="${club.id}">${club.display_name}</option>`)
         .join("");
     } catch (err) {
       elements.clubSelect.innerHTML =
@@ -94,7 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Form submit handler
   async function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -114,127 +139,53 @@ document.addEventListener("DOMContentLoaded", function () {
         throw new Error(data.detail || "An error occurred");
       }
 
-      // Display schedule
-      let scheduleHtml = "";
-
       if (Object.keys(data.schedule).length === 0) {
-        const errorMessage = data.message || "Nie znaleziono danych.";
-        scheduleHtml = `<div class="error">${escapeHtml(errorMessage)}</div>`;
+        const message = data.message || "Nie znaleziono danych.";
+        elements.scheduleContainer.innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
       } else {
-        for (const [day, scheduleItems] of Object.entries(data.schedule)) {
-          if (!scheduleItems || scheduleItems.length === 0) continue;
-
-          scheduleHtml += `
-                        <h3 class="collapsible-header collapsed">${day} <span class="collapse-indicator">&#8645;</span></h3>
-                        <div class="collapsible-content" style="display: none;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th data-column="name">Imię i nazwisko</th>
-                                        <th data-column="category" class="category-header">Kategoria</th>
-                                        <th data-column="mat">Mata</th>
-                                        <th data-column="time">Czas</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${scheduleItems
-                                      .map((item) => {
-                                        const timeStr = item.time || "";
-                                        const endTimestamp = item.end_timestamp;
-
-                                        // Determine row color based on server time (only if serverTimestamp is available)
-                                        let rowClass = "";
-                                        if (serverTimestamp && endTimestamp) {
-                                          if (serverTimestamp > endTimestamp) {
-                                            rowClass = "time-past";
-                                          }
-                                        }
-
-                                        return `
-                                            <tr class="${rowClass}">
-                                                <td data-column="name">${escapeHtml(item.name || "-")}</td>
-                                                <td data-column="category" class="category-cell">${escapeHtml(item.category || "-")}</td>
-                                                <td data-column="mat">${escapeHtml(item.mat || "-")}</td>
-                                                <td data-column="time">${escapeHtml(timeStr || "-")}</td>
-                                            </tr>
-                                        `;
-                                      })
-                                      .join("")}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-        }
+        elements.scheduleContainer.innerHTML = Object.entries(data.schedule)
+          .filter(([, items]) => items && items.length > 0)
+          .map(([day, items]) => buildDayHtml(day, items))
+          .join("");
       }
-      elements.scheduleContainer.innerHTML = scheduleHtml;
 
-      // Add collapsible functionality
       addCollapsibleBehavior();
-
       elements.results.style.display = "block";
-      elements.loading.style.display = "none";
     } catch (err) {
       elements.error.textContent = err.message;
       elements.error.style.display = "block";
+    } finally {
       elements.loading.style.display = "none";
     }
   }
 
-  function escapeHtml(unsafe) {
-    if (unsafe === null || unsafe === undefined) return "-";
-    return unsafe
-      .toString()
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
   function addCollapsibleBehavior() {
-    const collapsibleHeaders = document.querySelectorAll(".collapsible-header");
-
-    collapsibleHeaders.forEach((header) => {
+    document.querySelectorAll(".collapsible-header").forEach((header) => {
       header.addEventListener("click", function () {
         const content = this.nextElementSibling;
-        const indicator = this.querySelector(".collapse-indicator");
-
-        if (this.classList.contains("collapsed")) {
-          // Expand
-          content.style.display = "block";
-          this.classList.remove("collapsed");
-          this.classList.add("expanded");
-        } else {
-          // Collapse
-          content.style.display = "none";
-          this.classList.add("collapsed");
-          this.classList.remove("expanded");
-        }
+        const isCollapsed = this.classList.contains("collapsed");
+        content.style.display = isCollapsed ? "block" : "none";
+        this.classList.toggle("collapsed", !isCollapsed);
+        this.classList.toggle("expanded", isCollapsed);
       });
     });
   }
 
-  // Fetch server timestamp for time-based row coloring
   async function initializeServerTime() {
     try {
       const response = await fetch("/api/server-time");
       const data = await response.json();
-
       if (response.ok) {
-        // Store server timestamp directly from response
         serverTimestamp = data.timestamp;
       }
     } catch (err) {
       console.error("Error fetching server time:", err);
-      serverTimestamp = null; // Ensure it's null on error
     }
   }
 
-  // Initialize tournaments and clubs on page load
   initializeTournaments();
   initializeClubs();
   initializeServerTime();
 
-  // Event listeners
   elements.form.addEventListener("submit", handleFormSubmit);
 });

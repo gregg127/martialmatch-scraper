@@ -127,7 +127,7 @@ select {
 .button-section {
     display: flex;
     justify-content: center;
-    margin-top: var(--space-md);
+    margin-top: var(--space);
 }
 
 button {
@@ -178,13 +178,6 @@ button {
     padding: 20px;
 }
 
-.schedule-container h3 {
-    color: var(--color-primary-light);
-    padding: 10px;
-    margin: 20px 0 10px;
-    border-bottom: 2px solid var(--color-primary);
-}
-
 /* Collapsible Header Styles */
 .collapsible-header {
     cursor: pointer;
@@ -194,10 +187,12 @@ button {
     align-items: center;
     transition: all 0.3s ease;
     border-radius: var(--radius);
-    padding: 12px 15px !important;
+    padding: 12px 15px;
     background-color: var(--color-white);
     box-shadow: var(--shadow);
-    margin-bottom: 5px !important;
+    margin: 20px 0 5px;
+    color: var(--color-primary-light);
+    border-bottom: 2px solid var(--color-primary);
 }
 
 .collapsible-header:hover {
@@ -207,7 +202,7 @@ button {
 }
 
 .collapsible-header.collapsed {
-    margin-bottom: 20px !important;
+    margin-bottom: 20px;
 }
 
 .collapse-indicator {
@@ -318,20 +313,6 @@ button {
     box-shadow: 0 2px 4px var(--shadow-color);
 }
 
-@media (max-width: 768px) {
-    .toggle {
-        width: 180px;
-    }
-    
-    .slider:before {
-        width: 86px;
-    }
-    
-    input:checked + .slider:before {
-        transform: translateX(86px);
-    }
-}
-
 /* Responsive Styles */
 @media (max-width: 956px) {
     /* Basic Layout */
@@ -398,7 +379,7 @@ button {
 
     /* Collapsible header mobile adjustments */
     .collapsible-header {
-        padding: 10px 12px !important;
+        padding: 10px 12px;
         font-size: 1.1rem;
     }
 
