@@ -34,6 +34,10 @@
     padding: 0;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 body {
     font-family: 'Arial', sans-serif;
     background-color: var(--color-background);
@@ -316,7 +320,7 @@ button {
 /* Responsive Styles */
 @media (max-width: 956px) {
     /* Basic Layout */
-    body, .container {
+    .container {
         padding: 10px;
     }
 
@@ -415,7 +419,7 @@ button {
 
 @media (max-width: 480px) {
     /* Basic Layout */
-    body, .container {
+    .container {
         padding: 5px;
     }
 
