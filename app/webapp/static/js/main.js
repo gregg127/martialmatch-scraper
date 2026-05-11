@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
     tournamentSelect: document.getElementById("tournamentSelect"),
     clubSelect: document.getElementById("clubSelect"),
     tournamentTypeRadios: document.getElementsByName("tournamentType"),
-    scheduleTypeRadios: document.getElementsByName("scheduleType"),
   };
 
   // Store tournament data
@@ -106,12 +105,9 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const eventId = elements.tournamentSelect.value;
       const clubId = elements.clubSelect.value;
-      const scheduleType =
-        Array.from(elements.scheduleTypeRadios).find((radio) => radio.checked)
-          ?.value || "planned";
 
       const response = await fetch(
-        `/api/participants?event_id=${eventId}&club_id=${clubId}&schedule_type=${scheduleType}`,
+        `/api/participants?event_id=${eventId}&club_id=${clubId}`,
       );
       const data = await response.json();
       if (!response.ok) {

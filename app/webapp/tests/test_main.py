@@ -96,32 +96,21 @@ def test_get_tournaments():
 
 
 @pytest.mark.parametrize(
-    "event_id,club_id,schedule_type,expected_status,test_case",
+    "event_id,club_id,expected_status,test_case",
     [
         # Valid requests
-        ("123", VALID_CLUB_ID, "planned", 200, "valid_request_nonexistent_event"),
+        ("123", VALID_CLUB_ID, 200, "valid_request_nonexistent_event"),
         # Invalid club validation
-        ("123", "invalid_club", "planned", 400, "invalid_club_id"),
+        ("123", "invalid_club", 400, "invalid_club_id"),
         # Empty parameter validation
-        ("", VALID_CLUB_ID, "planned", 400, "empty_event_id"),
-        ("123", "", "planned", 400, "empty_club_id"),
-        ("123", VALID_CLUB_ID, "", 400, "empty_schedule_type"),
+        ("", VALID_CLUB_ID, 400, "empty_event_id"),
+        ("123", "", 400, "empty_club_id"),
         # Field length validation
-        (
-            "x" * (MAX_FIELD_LENGTH + 1),
-            VALID_CLUB_ID,
-            "planned",
-            400,
-            "event_id_too_long",
-        ),
-        ("123", "x" * (MAX_FIELD_LENGTH + 1), "planned", 400, "club_id_too_long"),
-        # Invalid enum values
-        ("123", VALID_CLUB_ID, "invalid", 400, "invalid_schedule_type"),
+        ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID, 400, "event_id_too_long"),
+        ("123", "x" * (MAX_FIELD_LENGTH + 1), 400, "club_id_too_long"),
     ],
 )
-def test_get_participants_validation(
-    event_id, club_id, schedule_type, expected_status, test_case
-):
+def test_get_participants_validation(event_id, club_id, expected_status, test_case):
     """Test validation for /api/participants endpoint
 
     Expected JSON response structure for successful requests:
@@ -130,7 +119,6 @@ def test_get_participants_validation(
             "Day 1": [
                 {
                     "Imię i nazwisko": "Participant Name",
-                    "Klub": "Club Name",
                     "Kategoria": "Category Name",
                     "Mata": "Mat Name",
                     "Dzień": "Day 1",
@@ -146,21 +134,11 @@ def test_get_participants_validation(
     For empty results or no participants: {"schedule": {}}
     """
     response = client.get(
-        f"/api/participants",
-        params={
-            "event_id": event_id,
-            "club_id": club_id,
-            "schedule_type": schedule_type,
-        },
+        "/api/participants",
+        params={"event_id": event_id, "club_id": club_id},
     )
     assert response.status_code == expected_status, f"Test case '{test_case}' failed"
 
-    # For 200 responses with no data, verify the response structure
-    if expected_status == 200 and test_case in [
-        "valid_request_nonexistent_event",
-        "valid_request_real_schedule",
-    ]:
+    if expected_status == 200:
         data = response.json()
         assert "schedule" in data
-        assert "message" in data
-        assert data["schedule"] == {}

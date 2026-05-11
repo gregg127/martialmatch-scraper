@@ -49,22 +49,20 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 ALLOWED_CLUBS = {
     "academia_gorila_warszawa": {
-        "name": "Academia Gorila / Warszawa",
+        "academy": "Academia Gorila",
+        "branch": "Warszawa",
         "display_name": "Academia Gorila (Warszawa)",
     },
     "academia_gorila_ruda_slaska": {
-        "name": "Academia Gorila / Ruda Śląska",
+        "academy": "Academia Gorila",
+        "branch": "Ruda Śląska",
         "display_name": "Academia Gorila (Ruda Śląska)",
     },
     "academia_gorila_bielsko_biala": {
-        "name": "Academia Gorila / Bielsko Biała",
+        "academy": "Academia Gorila",
+        "branch": "Bielsko Biała",
         "display_name": "Academia Gorila (Bielsko Biała)",
     },
-}
-
-ALLOWED_SCHEDULE_TYPES = {
-    "planned": {"name": "planned", "description": "Scheduled time"},
-    "real": {"name": "real", "description": "Real-time schedule"},
 }
 
 participants_cache = TTLCache(maxsize=CACHE_SIZE, ttl=PARTICIPANTS_CACHE_TTL)
@@ -104,52 +102,39 @@ def fetch_bjj_participants(event_id, club_id):
     """
     if club_id not in ALLOWED_CLUBS:
         raise ValueError(f"Club {club_id} is not in the allowed clubs list")
-    url = f"{BASE_URL}/pl/events/{event_id}/starting-lists"
+    numeric_id = extract_numeric_id(event_id)
+    url = f"{BASE_URL}/api/events/{numeric_id}/starting-lists/public"
+    cookies = {"PANEL_LANGUAGE_V3": "pl", "PANEL_TIMEZONE": "Europe/Warsaw"}
     try:
-        response = make_api_request(url)
-        soup = BeautifulSoup(response.text, "html.parser")
+        json_data = make_api_request(url, cookies).json()
     except EventNotFoundHTTPError:
         raise EventNotFoundError()
-    except Exception:
-        raise  # Re-raise other exceptions as-is
     start_time_prof = time.time()
+    club = ALLOWED_CLUBS[club_id]
     participant_data = []
-    categories = soup.find_all("div", class_="column is-offset-2 is-8")
-    for i in range(0, len(categories), 2):
-        try:
-            category_section = categories[i]
-            table_section = categories[i + 1] if i + 1 < len(categories) else None
-            category_name = category_section.find(
-                "h4", class_="title is-4 is-marginless"
-            ).text.strip()
-            if not table_section or not table_section.find("table"):
-                continue  # Skip categories without participants instead of raising error
-            for row in table_section.find("tbody").find_all("tr"):
-                cols = row.find_all("td")
-                name = cols[1].find("a", class_="competitor-name").text.strip()
-                club_tag = cols[2].find("a")
-                club = f"{club_tag.text.strip()} {cols[2].text.replace(club_tag.text.strip(), '').strip()}".strip()
-                participant_data.append((name, club, category_name))
-        except (AttributeError, IndexError) as e:
-            continue  # Skip malformed data instead of failing
-    df = pd.DataFrame(
-        participant_data, columns=["Imię i nazwisko", "Klub", "Kategoria"]
-    )
-    filtered_df = df[df["Klub"] == ALLOWED_CLUBS[club_id]["name"]]
+    for cat in json_data.get("categories", []):
+        category_name = cat.get("category", "")
+        for comp in cat.get("competitors", []):
+            if (
+                comp.get("academy") == club["academy"]
+                and comp.get("branch", "").strip() == club["branch"]
+            ):
+                name = f"{comp['firstName']} {comp['lastName']}"
+                participant_data.append((name, category_name))
+    df = pd.DataFrame(participant_data, columns=["Imię i nazwisko", "Kategoria"])
     logging.info(
         f"[PROFILE] fetch_bjj_participants data parsing took {time.time() - start_time_prof:.4f} seconds"
     )
-    return filtered_df
+    return df
 
 
 @cache_with_ttl(schedule_cache)
-def fetch_bjj_schedule(event_id, schedule_type):
+def fetch_bjj_schedule(event_id):
     """
     Fetch BJJ competition schedule from the MartialMatch API.
     Results are cached to reduce API calls.
     Args:
         event_id: ID of the tournament
-        schedule_type: 'planned' for scheduled time, 'real' for real-time schedule
     """
     numeric_id = extract_numeric_id(event_id)
     url = f"{BASE_URL}/api/events/{numeric_id}/schedules"
@@ -158,12 +143,6 @@ def fetch_bjj_schedule(event_id, schedule_type):
     start_time_prof = time.time()
     schedule_data = []
     for day in json_data.get("schedules", []):
-        if (
-            schedule_type == ALLOWED_SCHEDULE_TYPES["real"]["name"]
-            and day.get("sharing") != 3
-        ):
-            # Skip days that are not part of the real-time schedule
-            continue
         for mat in day.get("mats", []):
             for category in mat.get("categories", []):
                 try:
@@ -238,20 +217,19 @@ def fetch_tournament_ids(url):
     return tournament_ids
 
 
-def get_participants_schedule(event_id, club_id, schedule_type):
+def get_participants_schedule(event_id, club_id):
     """
-    Get participants schedule for a specific event, club, and schedule type.
+    Get participants schedule for a specific event and club.
     Args:
         event_id: ID of the tournament
         club_id: ID of the club from ALLOWED_CLUBS dictionary
-        schedule_type: 'planned' for scheduled time, 'real' for real-time schedule
     Returns:
         Dict containing schedule organized by day, or empty dict if no participants
     """
     participants = fetch_bjj_participants(event_id, club_id)
     if participants.empty:
         raise ParticipantsNotFoundError()
-    schedule = fetch_bjj_schedule(event_id, schedule_type)
+    schedule = fetch_bjj_schedule(event_id)
     if schedule.empty:
         raise ScheduleNotFoundError()
     return merge_participants_with_schedule(participants, schedule)

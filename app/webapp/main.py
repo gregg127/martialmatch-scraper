@@ -6,8 +6,7 @@ from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from martialmatch_scraper import (ALLOWED_CLUBS, ALLOWED_SCHEDULE_TYPES,
-                                  TIMEZONE, EventNotFoundError,
+from martialmatch_scraper import (ALLOWED_CLUBS, TIMEZONE, EventNotFoundError,
                                   ParticipantsNotFoundError,
                                   ScheduleNotFoundError,
                                   fetch_all_tournament_ids,
@@ -62,17 +61,10 @@ async def get_server_time():
 async def get_participants(
     event_id: str = Query(..., description="Tournament event ID"),
     club_id: str = Query(..., description="Club ID from allowed clubs"),
-    schedule_type: str = Query(
-        ..., description="Type of schedule to fetch (planned or real)"
-    ),
 ) -> Dict[str, Any]:
     try:
-        params = ParticipantRequest(
-            event_id=event_id, club_id=club_id, schedule_type=schedule_type
-        )
-        schedule_per_day = get_participants_schedule(
-            params.event_id, params.club_id, params.schedule_type
-        )
+        params = ParticipantRequest(event_id=event_id, club_id=club_id)
+        schedule_per_day = get_participants_schedule(params.event_id, params.club_id)
         return {"schedule": schedule_per_day}
     except PydanticValidationError as e:
         error_msg = e.errors()[0]["msg"] if e.errors() else "Validation error"
@@ -93,26 +85,12 @@ class ParticipantRequest(BaseModel):
     club_id: str = Field(
         ..., min_length=1, max_length=100, description="Club ID from allowed clubs"
     )
-    schedule_type: str = Field(
-        ..., description="Type of schedule to fetch (planned or real)"
-    )
 
-    @field_validator("event_id", "club_id", "schedule_type")
+    @field_validator("event_id", "club_id")
     @classmethod
     def strip_value(cls, v: str) -> str:
         """Strip whitespace from input values."""
         return v.strip()
-
-    @field_validator("schedule_type")
-    @classmethod
-    def validate_schedule_type(cls, v: str) -> str:
-        """Validate that schedule_type is either 'planned' or 'real'."""
-        if v not in ALLOWED_SCHEDULE_TYPES:
-            allowed_types = list(ALLOWED_SCHEDULE_TYPES.keys())
-            raise ValueError(
-                f"Schedule type must be one of: {', '.join(allowed_types)}"
-            )
-        return v
 
     @field_validator("club_id")
     @classmethod
