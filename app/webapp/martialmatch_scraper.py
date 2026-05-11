@@ -12,9 +12,8 @@ from utils import EventNotFoundHTTPError, extract_numeric_id, make_api_request
 
 logging.basicConfig(level=logging.INFO)
 
-# Error messages
 NO_PARTICIPANTS_MESSAGE = "Nie znaleziono zawodników tego klubu w tym turnieju"
-NO_SCHEDULE_MESSAGE = "Brak harmonogramu wskazanego typu dla tego turnieju"
+NO_SCHEDULE_MESSAGE = "Brak harmonogramu dla tego turnieju"
 EVENT_NOT_FOUND_MESSAGE = "Nie znaleziono turnieju"
 
 
@@ -46,6 +45,7 @@ TOURNAMENTS_CACHE_TTL = 3600  # Cache time in seconds (60 minutes)
 CACHE_SIZE = 50  # Maximum number of items in cache
 TIMEZONE = pytz.timezone("Europe/Warsaw")
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+API_COOKIES = {"PANEL_LANGUAGE_V3": "pl", "PANEL_TIMEZONE": "Europe/Warsaw"}
 
 ALLOWED_CLUBS = {
     "academia_gorila_warszawa": {
@@ -93,20 +93,12 @@ def cache_with_ttl(cache):
 
 @cache_with_ttl(participants_cache)
 def fetch_bjj_participants(event_id, club_id):
-    """
-    Fetch BJJ participants for the given event ID and club.
-    Results are cached to reduce API calls.
-    Args:
-        event_id: ID of the tournament
-        club_id: ID of the club from ALLOWED_CLUBS dictionary
-    """
     if club_id not in ALLOWED_CLUBS:
         raise ValueError(f"Club {club_id} is not in the allowed clubs list")
     numeric_id = extract_numeric_id(event_id)
     url = f"{BASE_URL}/api/events/{numeric_id}/starting-lists/public"
-    cookies = {"PANEL_LANGUAGE_V3": "pl", "PANEL_TIMEZONE": "Europe/Warsaw"}
     try:
-        json_data = make_api_request(url, cookies).json()
+        json_data = make_api_request(url, API_COOKIES).json()
     except EventNotFoundHTTPError:
         raise EventNotFoundError()
     start_time_prof = time.time()
@@ -130,16 +122,9 @@ def fetch_bjj_participants(event_id, club_id):
 
 @cache_with_ttl(schedule_cache)
 def fetch_bjj_schedule(event_id):
-    """
-    Fetch BJJ competition schedule from the MartialMatch API.
-    Results are cached to reduce API calls.
-    Args:
-        event_id: ID of the tournament
-    """
     numeric_id = extract_numeric_id(event_id)
     url = f"{BASE_URL}/api/events/{numeric_id}/schedules"
-    cookies = {"PANEL_LANGUAGE_V3": "pl", "PANEL_TIMEZONE": "Europe/Warsaw"}
-    json_data = make_api_request(url, cookies).json()
+    json_data = make_api_request(url, API_COOKIES).json()
     start_time_prof = time.time()
     schedule_data = []
     for day in json_data.get("schedules", []):
@@ -149,14 +134,12 @@ def fetch_bjj_schedule(event_id):
                     times = category.get("scheduledCategoryTime", {})
                     start_time = datetime.strptime(times["start"], DATE_FORMAT)
                     end_time = datetime.strptime(times["end"], DATE_FORMAT)
-                    # Convert to Polish timezone
                     start_time_tz = start_time.replace(tzinfo=pytz.UTC).astimezone(
                         TIMEZONE
                     )
                     end_time_tz = end_time.replace(tzinfo=pytz.UTC).astimezone(TIMEZONE)
                     start = start_time_tz.strftime("%H:%M")
                     end = end_time_tz.strftime("%H:%M")
-                    # Get timestamps
                     start_timestamp = int(start_time_tz.timestamp())
                     end_timestamp = int(end_time_tz.timestamp())
                     schedule_data.append(
@@ -170,7 +153,7 @@ def fetch_bjj_schedule(event_id):
                         ]
                     )
                 except (KeyError, ValueError):
-                    continue  # Skip invalid time data
+                    continue
     df = pd.DataFrame(
         schedule_data,
         columns=[
@@ -218,14 +201,6 @@ def fetch_tournament_ids(url):
 
 
 def get_participants_schedule(event_id, club_id):
-    """
-    Get participants schedule for a specific event and club.
-    Args:
-        event_id: ID of the tournament
-        club_id: ID of the club from ALLOWED_CLUBS dictionary
-    Returns:
-        Dict containing schedule organized by day, or empty dict if no participants
-    """
     participants = fetch_bjj_participants(event_id, club_id)
     if participants.empty:
         raise ParticipantsNotFoundError()

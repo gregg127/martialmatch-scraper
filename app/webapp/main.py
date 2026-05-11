@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException, Path, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from martialmatch_scraper import (ALLOWED_CLUBS, TIMEZONE, EventNotFoundError,
+from martialmatch_scraper import (ALLOWED_CLUBS, EventNotFoundError,
                                   ParticipantsNotFoundError,
                                   ScheduleNotFoundError,
                                   fetch_all_tournament_ids,
