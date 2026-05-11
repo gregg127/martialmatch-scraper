@@ -366,6 +366,10 @@ button {
     }
 
     /* Form Adjustments */
+    .form-container {
+        padding: var(--space);
+    }
+
     .form-group {
         gap: 8px;
     }
