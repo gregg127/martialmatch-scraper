@@ -37,7 +37,7 @@ docker-compose up -d --build
 All application code lives in `app/webapp/`. There are only three Python modules:
 
 - **`main.py`** — FastAPI app, route handlers, and input validation via Pydantic (`ParticipantRequest`). Imports everything it needs from `martialmatch_scraper.py`.
-- **`martialmatch_scraper.py`** — Core scraping logic. Defines `ALLOWED_CLUBS` (hardcoded club list). Contains three cached fetch functions (`fetch_bjj_participants`, `fetch_bjj_schedule`, `fetch_tournament_ids`) using `TTLCache` via the `cache_with_ttl` decorator. The main entry point is `get_participants_schedule`, which fetches both data sources and calls `merge_participants_with_schedule` to join them on the `Kategoria` (category) column using pandas.
+- **`martialmatch_scraper.py`** — Core scraping logic. Defines `ALLOWED_CLUBS` (hardcoded club list). Contains three cached fetch functions (`fetch_bjj_participants`, `fetch_bjj_schedule`, `fetch_tournament_ids`) using `TTLCache` via the `cache_with_ttl` decorator. The main entry point is `get_participants_schedule`, which fetches both data sources and calls `merge_participants_with_schedule` to join them on the `category` column using pandas.
 - **`utils.py`** — Thin HTTP client wrapper (`make_api_request`) and `extract_numeric_id`. Raises `EventNotFoundHTTPError` on 404s, which `martialmatch_scraper.py` converts to `EventNotFoundError`.
 
 **Caching:** Three separate `TTLCache` instances in `martialmatch_scraper.py` — participants (30 min), schedule (10 min), tournaments (60 min). The `cache_with_ttl` decorator key is `str(args) + str(kwargs)`.
