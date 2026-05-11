@@ -109,12 +109,12 @@ def test_get_participants_returns_merged_schedule():
     schedule = response.json()["schedule"]
     assert "Dzień 1" in schedule
     item = schedule["Dzień 1"][0]
-    assert item["Imię i nazwisko"] == "Anna Kowalska"
-    assert item["Kategoria"] == "adult; kobiety; -58 kg"
-    assert item["Mata"] == "Mata 1"
-    assert "Czas" in item
-    assert "Start timestamp" in item
-    assert "End timestamp" in item
+    assert item["name"] == "Anna Kowalska"
+    assert item["category"] == "adult; kobiety; -58 kg"
+    assert item["mat"] == "Mata 1"
+    assert "time" in item
+    assert "start_timestamp" in item
+    assert "end_timestamp" in item
 
 
 def test_get_participants_no_matching_competitors():

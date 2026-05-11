@@ -1,9 +1,9 @@
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Query
-from uvicorn.logging import DefaultFormatter
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,14 +17,18 @@ from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 
-_handler = logging.StreamHandler()
-_handler.setFormatter(DefaultFormatter("%(levelprefix)s %(message)s", use_colors=None))
-_scraper_log = logging.getLogger("martialmatch_scraper")
-_scraper_log.addHandler(_handler)
-_scraper_log.setLevel(logging.INFO)
-_scraper_log.propagate = False
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scraper_log = logging.getLogger("martialmatch_scraper")
+    uvicorn_log = logging.getLogger("uvicorn")
+    scraper_log.handlers = list(uvicorn_log.handlers)
+    scraper_log.setLevel(logging.INFO)
+    scraper_log.propagate = False
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

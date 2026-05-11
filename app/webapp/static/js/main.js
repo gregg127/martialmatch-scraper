@@ -139,9 +139,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                 <tbody>
                                     ${scheduleItems
                                       .map((item) => {
-                                        const timeStr = item["Czas"] || "";
-                                        const endTimestamp =
-                                          item["End timestamp"];
+                                        const timeStr = item.time || "";
+                                        const endTimestamp = item.end_timestamp;
 
                                         // Determine row color based on server time (only if serverTimestamp is available)
                                         let rowClass = "";
@@ -153,9 +152,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                                         return `
                                             <tr class="${rowClass}">
-                                                <td data-column="name">${escapeHtml(item["Imię i nazwisko"] || "-")}</td>
-                                                <td data-column="category" class="category-cell">${escapeHtml(item.Kategoria || "-")}</td>
-                                                <td data-column="mat">${escapeHtml(item.Mata || "-")}</td>
+                                                <td data-column="name">${escapeHtml(item.name || "-")}</td>
+                                                <td data-column="category" class="category-cell">${escapeHtml(item.category || "-")}</td>
+                                                <td data-column="mat">${escapeHtml(item.mat || "-")}</td>
                                                 <td data-column="time">${escapeHtml(timeStr || "-")}</td>
                                             </tr>
                                         `;

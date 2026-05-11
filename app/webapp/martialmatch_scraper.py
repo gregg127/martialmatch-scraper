@@ -113,7 +113,7 @@ def fetch_bjj_participants(event_id, club_id):
             ):
                 name = f"{comp['firstName']} {comp['lastName']}"
                 participant_data.append((name, category_name))
-    df = pd.DataFrame(participant_data, columns=["Imię i nazwisko", "Kategoria"])
+    df = pd.DataFrame(participant_data, columns=["name", "category"])
     logger.info(
         f"[PROFILE] fetch_bjj_participants data parsing took {time.time() - start_time_prof:.4f} seconds"
     )
@@ -157,12 +157,12 @@ def fetch_bjj_schedule(event_id):
     df = pd.DataFrame(
         schedule_data,
         columns=[
-            "Kategoria",
-            "Mata",
-            "Dzień",
-            "Czas",
-            "Start timestamp",
-            "End timestamp",
+            "category",
+            "mat",
+            "day",
+            "time",
+            "start_timestamp",
+            "end_timestamp",
         ],
     )
     logger.info(
@@ -215,16 +215,16 @@ def merge_participants_with_schedule(participants, schedule):
     schedule_per_day = {}
     start_time_prof = time.time()
     schedule = schedule.copy()
-    schedule["start_time"] = schedule["Czas"].str.extract(r"(\d{2}:\d{2}) -")
-    merged = pd.merge(participants, schedule, on="Kategoria", how="inner")
+    schedule["start_time"] = schedule["time"].str.extract(r"(\d{2}:\d{2}) -")
+    merged = pd.merge(participants, schedule, on="category", how="inner")
     if merged.empty:
         logger.info(
             f"[PROFILE] merge_participants_with_schedule with empty merge took {time.time() - start_time_prof:.4f} seconds"
         )
         return schedule_per_day
-    merged = merged.sort_values(["Dzień", "start_time", "Imię i nazwisko"])
+    merged = merged.sort_values(["day", "start_time", "name"])
     merged = merged.drop("start_time", axis=1)
-    for day, group in merged.groupby("Dzień"):
+    for day, group in merged.groupby("day"):
         schedule_per_day[day] = group.to_dict(orient="records")
     logger.info(
         f"[PROFILE] merge_participants_with_schedule took {time.time() - start_time_prof:.4f} seconds"
