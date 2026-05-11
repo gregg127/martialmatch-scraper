@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from cachetools import TTLCache
 from utils import EventNotFoundHTTPError, extract_numeric_id, make_api_request
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 NO_PARTICIPANTS_MESSAGE = "Nie znaleziono zawodników tego klubu w tym turnieju"
 NO_SCHEDULE_MESSAGE = "Brak harmonogramu dla tego turnieju"
@@ -79,9 +79,9 @@ def cache_with_ttl(cache):
             key = str(args) + str(kwargs)
             result = cache.get(key)
             if result is not None:
-                logging.info(f"[CACHE HIT] {func.__name__} key={key}")
+                logger.info(f"[CACHE HIT] {func.__name__} key={key}")
                 return result
-            logging.info(f"[CACHE MISS] {func.__name__} key={key}")
+            logger.info(f"[CACHE MISS] {func.__name__} key={key}")
             result = func(*args, **kwargs)
             cache[key] = result
             return result
@@ -114,7 +114,7 @@ def fetch_bjj_participants(event_id, club_id):
                 name = f"{comp['firstName']} {comp['lastName']}"
                 participant_data.append((name, category_name))
     df = pd.DataFrame(participant_data, columns=["Imię i nazwisko", "Kategoria"])
-    logging.info(
+    logger.info(
         f"[PROFILE] fetch_bjj_participants data parsing took {time.time() - start_time_prof:.4f} seconds"
     )
     return df
@@ -165,7 +165,7 @@ def fetch_bjj_schedule(event_id):
             "End timestamp",
         ],
     )
-    logging.info(
+    logger.info(
         f"[PROFILE] fetch_bjj_schedule data parsing took {time.time() - start_time_prof:.4f} seconds"
     )
     return df
@@ -218,7 +218,7 @@ def merge_participants_with_schedule(participants, schedule):
     schedule["start_time"] = schedule["Czas"].str.extract(r"(\d{2}:\d{2}) -")
     merged = pd.merge(participants, schedule, on="Kategoria", how="inner")
     if merged.empty:
-        logging.info(
+        logger.info(
             f"[PROFILE] merge_participants_with_schedule with empty merge took {time.time() - start_time_prof:.4f} seconds"
         )
         return schedule_per_day
@@ -226,7 +226,7 @@ def merge_participants_with_schedule(participants, schedule):
     merged = merged.drop("start_time", axis=1)
     for day, group in merged.groupby("Dzień"):
         schedule_per_day[day] = group.to_dict(orient="records")
-    logging.info(
+    logger.info(
         f"[PROFILE] merge_participants_with_schedule took {time.time() - start_time_prof:.4f} seconds"
     )
     return schedule_per_day
