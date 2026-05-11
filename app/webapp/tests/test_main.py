@@ -1,144 +1,173 @@
 import pytest
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
 from main import app
-from martialmatch_scraper import ALLOWED_CLUBS
+from martialmatch_scraper import (
+    ALLOWED_CLUBS,
+    participants_cache,
+    schedule_cache,
+    tournaments_cache,
+)
+from utils import EventNotFoundHTTPError
 
-# Test setup
 client = TestClient(app)
-
-# Test constants
 MAX_FIELD_LENGTH = 100
-VALID_CLUB_ID = list(ALLOWED_CLUBS.keys())[0]
+VALID_CLUB_ID = list(ALLOWED_CLUBS.keys())[0]  # "academia_gorila_warszawa"
+
+MOCK_PARTICIPANTS_JSON = {
+    "categories": [
+        {
+            "category": "adult; kobiety; -58 kg",
+            "competitors": [
+                {
+                    "firstName": "Anna",
+                    "lastName": "Kowalska",
+                    "academy": "Academia Gorila",
+                    "branch": "Warszawa",
+                }
+            ],
+        }
+    ]
+}
+
+MOCK_SCHEDULE_JSON = {
+    "schedules": [
+        {
+            "name": "Dzień 1",
+            "mats": [
+                {
+                    "name": "Mata 1",
+                    "categories": [
+                        {
+                            "name": "adult; kobiety; -58 kg",
+                            "scheduledCategoryTime": {
+                                "start": "2024-01-01 10:00:00",
+                                "end": "2024-01-01 10:30:00",
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+    ]
+}
+
+MOCK_TOURNAMENTS_HTML = '<a href="/pl/events/123-test-tournament">Test Tournament</a>'
 
 
-# =============================================================================
-# API Endpoint Tests
-# =============================================================================
+def _make_response(json_data=None, text=""):
+    mock = MagicMock()
+    mock.json.return_value = json_data or {}
+    mock.text = text
+    return mock
+
+
+def _mock_api(url, cookies=None):
+    if "starting-lists" in url:
+        return _make_response(json_data=MOCK_PARTICIPANTS_JSON)
+    if "schedules" in url:
+        return _make_response(json_data=MOCK_SCHEDULE_JSON)
+    return _make_response(text=MOCK_TOURNAMENTS_HTML)
+
+
+@pytest.fixture(autouse=True)
+def clear_caches():
+    participants_cache.clear()
+    schedule_cache.clear()
+    tournaments_cache.clear()
 
 
 def test_get_clubs():
-    """Test the /api/clubs endpoint
-
-    Expected JSON response structure:
-    {
-        "clubs": [
-            {
-                "id": "test_club_id_1",
-                "display_name": "Test Club Name 1"
-            },
-            {
-                "id": "test_club_id_2",
-                "display_name": "Test Club Name 2"
-            }
-        ]
-    }
-    """
     response = client.get("/api/clubs")
     assert response.status_code == 200
     data = response.json()
-    assert "clubs" in data
     assert len(data["clubs"]) == len(ALLOWED_CLUBS)
-
-    # Verify each club has the expected structure and data types
     for club in data["clubs"]:
-        assert "id" in club
-        assert "display_name" in club
-        assert isinstance(club["id"], str)
-        assert isinstance(club["display_name"], str)
-        assert club["id"] in ALLOWED_CLUBS  # Verify ID exists in allowed clubs
+        assert "id" in club and "display_name" in club
+        assert club["id"] in ALLOWED_CLUBS
 
 
 def test_get_tournaments():
-    """Test the /api/tournaments endpoint
+    with patch("martialmatch_scraper.make_api_request", side_effect=_mock_api):
+        response = client.get("/api/tournaments")
+    assert response.status_code == 200
+    tournaments = response.json()["tournaments"]
+    for category in ["active", "archived"]:
+        assert isinstance(tournaments[category], list)
+        for t in tournaments[category]:
+            assert "id" in t and "name" in t
 
-    Expected JSON response structure:
-    {
-        "tournaments": {
-            "active": [
-                {
-                    "id": "123-tournament-name",
-                    "name": "Tournament Name"
-                },
-                ...
-            ],
-            "archived": [
-                {
-                    "id": "456-old-tournament-name",
-                    "name": "Old Tournament Name"
-                },
-                ...
-            ]
-        }
-    }
-    """
-    response = client.get("/api/tournaments")
+
+def test_get_participants_returns_merged_schedule():
+    with patch("martialmatch_scraper.make_api_request", side_effect=_mock_api):
+        response = client.get(
+            "/api/participants",
+            params={"event_id": "123", "club_id": "academia_gorila_warszawa"},
+        )
+    assert response.status_code == 200
+    schedule = response.json()["schedule"]
+    assert "Dzień 1" in schedule
+    item = schedule["Dzień 1"][0]
+    assert item["Imię i nazwisko"] == "Anna Kowalska"
+    assert item["Kategoria"] == "adult; kobiety; -58 kg"
+    assert item["Mata"] == "Mata 1"
+    assert "Czas" in item
+    assert "Start timestamp" in item
+    assert "End timestamp" in item
+
+
+def test_get_participants_no_matching_competitors():
+    def mock_no_competitors(url, cookies=None):
+        if "starting-lists" in url:
+            return _make_response(json_data={"categories": []})
+        return _make_response(json_data=MOCK_SCHEDULE_JSON)
+
+    with patch("martialmatch_scraper.make_api_request", side_effect=mock_no_competitors):
+        response = client.get(
+            "/api/participants",
+            params={"event_id": "123", "club_id": "academia_gorila_warszawa"},
+        )
     assert response.status_code == 200
     data = response.json()
-    assert "tournaments" in data
-    assert isinstance(data["tournaments"], dict)
-    assert "active" in data["tournaments"]
-    assert "archived" in data["tournaments"]
-
-    # Verify structure of tournament lists
-    for category in ["active", "archived"]:
-        assert isinstance(data["tournaments"][category], list)
-        # If tournaments exist, verify they have the expected structure
-        for tournament in data["tournaments"][category]:
-            assert "id" in tournament
-            assert "name" in tournament
-            assert isinstance(tournament["id"], str)
-            assert isinstance(tournament["name"], str)
+    assert data["schedule"] == {}
+    assert "message" in data
 
 
-# =============================================================================
-# API Validation Tests
-# =============================================================================
+def test_get_participants_event_not_found():
+    with patch(
+        "martialmatch_scraper.make_api_request", side_effect=EventNotFoundHTTPError
+    ):
+        response = client.get(
+            "/api/participants",
+            params={"event_id": "999999", "club_id": "academia_gorila_warszawa"},
+        )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["schedule"] == {}
+    assert "message" in data
 
 
 @pytest.mark.parametrize(
-    "event_id,club_id,expected_status,test_case",
+    "event_id,club_id",
     [
-        # Valid requests
-        ("123", VALID_CLUB_ID, 200, "valid_request_nonexistent_event"),
-        # Invalid club validation
-        ("123", "invalid_club", 400, "invalid_club_id"),
-        # Empty parameter validation
-        ("", VALID_CLUB_ID, 400, "empty_event_id"),
-        ("123", "", 400, "empty_club_id"),
-        # Field length validation
-        ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID, 400, "event_id_too_long"),
-        ("123", "x" * (MAX_FIELD_LENGTH + 1), 400, "club_id_too_long"),
+        ("123", "invalid_club"),
+        ("", VALID_CLUB_ID),
+        ("123", ""),
+        ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID),
+        ("123", "x" * (MAX_FIELD_LENGTH + 1)),
+    ],
+    ids=[
+        "invalid_club_id",
+        "empty_event_id",
+        "empty_club_id",
+        "event_id_too_long",
+        "club_id_too_long",
     ],
 )
-def test_get_participants_validation(event_id, club_id, expected_status, test_case):
-    """Test validation for /api/participants endpoint
-
-    Expected JSON response structure for successful requests:
-    {
-        "schedule": {
-            "Day 1": [
-                {
-                    "Imię i nazwisko": "Participant Name",
-                    "Kategoria": "Category Name",
-                    "Mata": "Mat Name",
-                    "Dzień": "Day 1",
-                    "Czas": "10:00 - 10:30",
-                    "Start timestamp": 1762587000,
-                    "End timestamp": 1762595505
-                }
-            ],
-            "Day 2": [...]
-        }
-    }
-
-    For empty results or no participants: {"schedule": {}}
-    """
+def test_get_participants_returns_400_for_invalid_input(event_id, club_id):
     response = client.get(
         "/api/participants",
         params={"event_id": event_id, "club_id": club_id},
     )
-    assert response.status_code == expected_status, f"Test case '{test_case}' failed"
-
-    if expected_status == 200:
-        data = response.json()
-        assert "schedule" in data
+    assert response.status_code == 400
