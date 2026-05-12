@@ -1,19 +1,19 @@
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 from main import app
-from martialmatch_scraper import (
-    ALLOWED_CLUBS,
-    participants_cache,
-    schedule_cache,
-    tournaments_cache,
-)
+from martialmatch_scraper import (ALLOWED_CLUBS, participants_cache,
+                                  schedule_cache, tournaments_cache)
 from utils import EventNotFoundHTTPError
 
 client = TestClient(app)
-MAX_FIELD_LENGTH = 100
-VALID_CLUB_ID = list(ALLOWED_CLUBS.keys())[0]  # "academia_gorila_warszawa"
+MAX_EVENT_ID_LENGTH = 100
+MAX_ACADEMY_LENGTH = 200
+MAX_BRANCH_LENGTH = 200
+
+VALID_ACADEMY = list(ALLOWED_CLUBS.values())[0]["academy"]
+VALID_BRANCH = list(ALLOWED_CLUBS.values())[0]["branch"]
 
 MOCK_PARTICIPANTS_JSON = {
     "categories": [
@@ -22,7 +22,7 @@ MOCK_PARTICIPANTS_JSON = {
             "competitors": [
                 {
                     "firstName": "Anna",
-                    "lastName": "Kowalska",
+                    "lastName": "Testowa",
                     "academy": "Academia Gorila",
                     "branch": "Warszawa",
                 }
@@ -85,6 +85,7 @@ def test_get_clubs():
     assert len(data["clubs"]) == len(ALLOWED_CLUBS)
     for club in data["clubs"]:
         assert "id" in club and "display_name" in club
+        assert "academy" in club and "branch" in club
         assert club["id"] in ALLOWED_CLUBS
 
 
@@ -103,13 +104,17 @@ def test_get_participants_returns_merged_schedule():
     with patch("martialmatch_scraper.make_api_request", side_effect=_mock_api):
         response = client.get(
             "/api/participants",
-            params={"event_id": "123", "club_id": "academia_gorila_warszawa"},
+            params={
+                "event_id": "123",
+                "academy": VALID_ACADEMY,
+                "branch": VALID_BRANCH,
+            },
         )
     assert response.status_code == 200
     schedule = response.json()["schedule"]
     assert "Dzień 1" in schedule
     item = schedule["Dzień 1"][0]
-    assert item["name"] == "Anna Kowalska"
+    assert item["name"] == "Anna Testowa"
     assert item["category"] == "adult; kobiety; -58 kg"
     assert item["mat"] == "Mata 1"
     assert "time" in item
@@ -123,10 +128,16 @@ def test_get_participants_no_matching_competitors():
             return _make_response(json_data={"categories": []})
         return _make_response(json_data=MOCK_SCHEDULE_JSON)
 
-    with patch("martialmatch_scraper.make_api_request", side_effect=mock_no_competitors):
+    with patch(
+        "martialmatch_scraper.make_api_request", side_effect=mock_no_competitors
+    ):
         response = client.get(
             "/api/participants",
-            params={"event_id": "123", "club_id": "academia_gorila_warszawa"},
+            params={
+                "event_id": "123",
+                "academy": VALID_ACADEMY,
+                "branch": VALID_BRANCH,
+            },
         )
     assert response.status_code == 200
     data = response.json()
@@ -140,7 +151,11 @@ def test_get_participants_event_not_found():
     ):
         response = client.get(
             "/api/participants",
-            params={"event_id": "999999", "club_id": "academia_gorila_warszawa"},
+            params={
+                "event_id": "999999",
+                "academy": VALID_ACADEMY,
+                "branch": VALID_BRANCH,
+            },
         )
     assert response.status_code == 200
     data = response.json()
@@ -149,25 +164,25 @@ def test_get_participants_event_not_found():
 
 
 @pytest.mark.parametrize(
-    "event_id,club_id",
+    "event_id,academy,branch",
     [
-        ("123", "invalid_club"),
-        ("", VALID_CLUB_ID),
-        ("123", ""),
-        ("x" * (MAX_FIELD_LENGTH + 1), VALID_CLUB_ID),
-        ("123", "x" * (MAX_FIELD_LENGTH + 1)),
+        ("", VALID_ACADEMY, VALID_BRANCH),
+        ("123", "", ""),
+        ("x" * (MAX_EVENT_ID_LENGTH + 1), VALID_ACADEMY, VALID_BRANCH),
+        ("123", "x" * (MAX_ACADEMY_LENGTH + 1), ""),
+        ("123", VALID_ACADEMY, "x" * (MAX_BRANCH_LENGTH + 1)),
     ],
     ids=[
-        "invalid_club_id",
         "empty_event_id",
-        "empty_club_id",
+        "empty_academy",
         "event_id_too_long",
-        "club_id_too_long",
+        "academy_too_long",
+        "branch_too_long",
     ],
 )
-def test_get_participants_returns_400_for_invalid_input(event_id, club_id):
+def test_get_participants_returns_400_for_invalid_input(event_id, academy, branch):
     response = client.get(
         "/api/participants",
-        params={"event_id": event_id, "club_id": club_id},
+        params={"event_id": event_id, "academy": academy, "branch": branch},
     )
     assert response.status_code == 400

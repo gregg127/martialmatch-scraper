@@ -12,6 +12,7 @@ from martialmatch_scraper import (ALLOWED_CLUBS, EventNotFoundError,
                                   ParticipantsNotFoundError,
                                   ScheduleNotFoundError,
                                   fetch_all_tournament_ids,
+                                  fetch_event_clubs,
                                   get_participants_schedule)
 from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
@@ -55,13 +56,31 @@ async def get_tournaments():
 
 @app.get("/api/clubs")
 async def get_clubs():
-    """Return all allowed clubs."""
+    """Return featured clubs."""
     return {
         "clubs": [
-            {"id": k, "display_name": v["display_name"]}
+            {
+                "id": k,
+                "display_name": v["display_name"],
+                "academy": v["academy"],
+                "branch": v["branch"],
+            }
             for k, v in ALLOWED_CLUBS.items()
         ]
     }
+
+
+@app.get("/api/event-clubs")
+async def get_event_clubs(
+    event_id: str = Query(..., min_length=1, max_length=100, description="Tournament event ID"),
+):
+    try:
+        clubs = fetch_event_clubs(event_id.strip())
+        return {"clubs": clubs}
+    except EventNotFoundError as e:
+        return {"clubs": [], "message": str(e)}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.get("/api/server-time")
@@ -73,11 +92,14 @@ async def get_server_time():
 @app.get("/api/participants")
 async def get_participants(
     event_id: str = Query(..., description="Tournament event ID"),
-    club_id: str = Query(..., description="Club ID from allowed clubs"),
+    academy: str = Query(..., description="Club academy name"),
+    branch: str = Query("", description="Club branch name"),
 ) -> Dict[str, Any]:
     try:
-        params = ParticipantRequest(event_id=event_id, club_id=club_id)
-        schedule_per_day = get_participants_schedule(params.event_id, params.club_id)
+        params = ParticipantRequest(event_id=event_id, academy=academy, branch=branch)
+        schedule_per_day = get_participants_schedule(
+            params.event_id, params.academy, params.branch
+        )
         return {"schedule": schedule_per_day}
     except PydanticValidationError as e:
         error_msg = e.errors()[0]["msg"] if e.errors() else "Validation error"
@@ -92,23 +114,12 @@ async def get_participants(
 
 # Models for validation
 class ParticipantRequest(BaseModel):
-    event_id: str = Field(
-        ..., min_length=1, max_length=100, description="Tournament event ID"
-    )
-    club_id: str = Field(
-        ..., min_length=1, max_length=100, description="Club ID from allowed clubs"
-    )
+    event_id: str = Field(..., min_length=1, max_length=100, description="Tournament event ID")
+    academy: str = Field(..., min_length=1, max_length=200, description="Club academy name")
+    branch: str = Field("", max_length=200, description="Club branch name")
 
-    @field_validator("event_id", "club_id")
+    @field_validator("event_id", "academy", "branch")
     @classmethod
     def strip_value(cls, v: str) -> str:
         """Strip whitespace from input values."""
         return v.strip()
-
-    @field_validator("club_id")
-    @classmethod
-    def validate_club_exists(cls, v: str) -> str:
-        """Validate that the club exists in ALLOWED_CLUBS."""
-        if v not in ALLOWED_CLUBS:
-            raise ValueError(f"Club ID {v} is not in the allowed clubs list")
-        return v

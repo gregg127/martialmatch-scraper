@@ -92,24 +92,25 @@ def cache_with_ttl(cache):
 
 
 @cache_with_ttl(participants_cache)
-def fetch_bjj_participants(event_id, club_id):
-    if club_id not in ALLOWED_CLUBS:
-        raise ValueError(f"Club {club_id} is not in the allowed clubs list")
+def _fetch_participants_json(event_id):
+    """Fetch and cache the raw starting-lists JSON for an event."""
     numeric_id = extract_numeric_id(event_id)
     url = f"{BASE_URL}/api/events/{numeric_id}/starting-lists/public"
     try:
-        json_data = make_api_request(url, API_COOKIES).json()
+        return make_api_request(url, API_COOKIES).json()
     except EventNotFoundHTTPError:
         raise EventNotFoundError()
+
+
+def fetch_bjj_participants(event_id, academy, branch=""):
+    json_data = _fetch_participants_json(event_id)
     start_time_prof = time.time()
-    club = ALLOWED_CLUBS[club_id]
     participant_data = []
     for cat in json_data.get("categories", []):
         category_name = cat.get("category", "")
         for comp in cat.get("competitors", []):
-            if (
-                comp.get("academy") == club["academy"]
-                and comp.get("branch", "").strip() == club["branch"]
+            if comp.get("academy") == academy and (
+                not branch or comp.get("branch", "").strip() == branch
             ):
                 name = f"{comp['firstName']} {comp['lastName']}"
                 participant_data.append((name, category_name))
@@ -171,6 +172,27 @@ def fetch_bjj_schedule(event_id):
     return df
 
 
+def fetch_event_clubs(event_id):
+    json_data = _fetch_participants_json(event_id)
+    seen = set()
+    clubs = []
+    for cat in json_data.get("categories", []):
+        for comp in cat.get("competitors", []):
+            academy = comp.get("academy", "").strip()
+            branch = comp.get("branch", "").strip()
+            if not academy:
+                continue
+            key = (academy, branch)
+            if key not in seen:
+                seen.add(key)
+                display = f"{academy} ({branch})" if branch else academy
+                clubs.append(
+                    {"academy": academy, "branch": branch, "display_name": display}
+                )
+    clubs.sort(key=lambda c: c["display_name"].lower())
+    return clubs
+
+
 def fetch_all_tournament_ids():
     """Fetch tournament IDs from both active and archive pages."""
     return {
@@ -200,8 +222,8 @@ def fetch_tournament_ids(url):
     return tournament_ids
 
 
-def get_participants_schedule(event_id, club_id):
-    participants = fetch_bjj_participants(event_id, club_id)
+def get_participants_schedule(event_id, academy, branch=""):
+    participants = fetch_bjj_participants(event_id, academy, branch)
     if participants.empty:
         raise ParticipantsNotFoundError()
     schedule = fetch_bjj_schedule(event_id)
