@@ -34,18 +34,44 @@
             </div>
           </div>
           <div class="form-section select-section">
-            <label for="tournamentSelect" class="select-label"
-              >Wybierz zawody:</label
-            >
-            <select id="tournamentSelect" name="tournamentId" required>
-              <option value="">Pobieram...</option>
-            </select>
+            <label class="select-label">Wybierz zawody:</label>
+            <div class="combobox-wrapper">
+              <button
+                type="button"
+                class="combobox-trigger"
+                id="tournamentTrigger"
+              >
+                <span class="combobox-trigger-text" id="tournamentDisplay"
+                  >Pobieram...</span
+                >
+                <span class="combobox-arrow" aria-hidden="true">▾</span>
+              </button>
+              <ul
+                id="tournamentDropdown"
+                class="combobox-dropdown"
+                role="listbox"
+                hidden
+              ></ul>
+            </div>
           </div>
           <div class="form-section select-section">
-            <label for="clubSelect" class="select-label">Wybierz klub:</label>
-            <select id="clubSelect" name="clubId" required>
-              <option value="">Pobieram...</option>
-            </select>
+            <label for="clubInput" class="select-label">Wybierz klub:</label>
+            <div class="combobox-wrapper">
+              <input
+                type="text"
+                id="clubInput"
+                autocomplete="off"
+                placeholder="Wpisz lub wybierz klub..."
+              />
+              <ul
+                id="clubDropdown"
+                class="combobox-dropdown"
+                role="listbox"
+                hidden
+              ></ul>
+              <input type="hidden" id="clubAcademy" />
+              <input type="hidden" id="clubBranch" />
+            </div>
           </div>
           <div class="form-section button-section">
             <button type="submit">Pokaż Harmonogram</button>
