@@ -5,11 +5,13 @@
 ## Why was this created?
 
 When using MartialMatch during a competition:
+
 - Finding competitors from your club requires browsing through multiple pages
 - There is no aggregated view of all mats for a club - you need to filter each mat separately
 - During large tournaments, the MartialMatch page can become slow
 
 Therefore, I created this simple app that:
+
 - Allows you to choose a competition and one of predefined clubs
 - Shows all competitors from your club with their fight times and mat numbers
 - Uses caching when fetching data from MartialMatch, making it resistant to traffic overload during large tournaments
@@ -17,6 +19,7 @@ Therefore, I created this simple app that:
 ## Developer Guide
 
 ### Prerequisites
+
 - Docker and Docker Compose (recommended)
 - Python 3.8+
 - pip package manager
@@ -24,12 +27,14 @@ Therefore, I created this simple app that:
 ### Quick Start with Docker (Recommended)
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/gregg127/martialmatch-scraper
 cd martialmatch-scraper
 ```
 
 2. Start the application:
+
 ```bash
 docker-compose up -d --build
 ```
@@ -39,23 +44,27 @@ The application will be available at `http://localhost:8000`
 ### Local Development Setup
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/gregg127/martialmatch-scraper
 cd martialmatch-scraper
 ```
 
 2. Create and activate a virtual environment:
+
 ```bash
 python -m venv venv
 source venv/bin/activate
 ```
 
 3. Install dependencies:
+
 ```bash
 pip install -r app/requirements.txt
 ```
 
 4. Run the development server:
+
 ```bash
 cd app/webapp
 fastapi dev main.py --port 8000
@@ -64,13 +73,32 @@ fastapi dev main.py --port 8000
 The application will be available at `http://localhost:8000`
 
 ### Testing
+
 Run the test suite:
+
 ```bash
 cd app/webapp
 python -m pytest tests/test_main.py -v
 ```
 
 ## Contributing
+
 1. Fork the repository
 2. Create a feature branch
 3. Submit a pull request
+
+## ⚠️ Disclaimer
+
+This is an **educational/portfolio project** — a web scraper for publicly available data from [martialmatch.com](https://martialmatch.com).
+
+- **Not affiliated** with MartialMatch.
+- **Not hosted** as a public service. Source code only.
+- Provided **as-is**, with no warranty and no liability on the author.
+
+**If you run this code, you are responsible for:**
+
+- Complying with [MartialMatch's Terms of Service](https://martialmatch.com/pl/terms-and-conditions).
+- Complying with **GDPR** and local data protection law — running this scraper makes **you** the data controller for any personal data processed (names, clubs, results).
+- Respecting `robots.txt`, rate limits, and not overloading the target's infrastructure.
+- Not using this for commercial purposes without permission from MartialMatch.
+- Not redistributing or publishing scraped personal data without a valid legal basis.
